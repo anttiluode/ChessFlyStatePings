@@ -5,7 +5,7 @@ from chessfly_statepings import cli
 
 def test_cli_has_all_v0_commands():
     parser = cli.build_parser()
-    for argv in (["assets"], ["probe", "--fen", "x"], ["compare", "--positions", "p"], ["sweep", "--positions", "p"], ["arena", "--games", "2"]):
+    for argv in (["assets"], ["probe", "--fen", "x"], ["compare", "--positions", "p"], ["sweep", "--positions", "p"], ["arena", "--games", "2"], ["orthogonal", "--positions", "p"]):
         args = parser.parse_args(argv)
         assert args.command == argv[0]
 
@@ -39,10 +39,7 @@ def test_help_does_not_need_external_artifacts():
     assert exc.value.code == 0
 
 
-def test_sweep_receipt_accumulates_instability_counts(tmp_path, monkeypatch):
-    positions = tmp_path / "p.txt"
-    positions.write_text("x\n")
-
+def _fake_runtime():
     class Manifest:
         paths = type("P", (), {})()
         def to_dict(self): return {"ok": True}
@@ -60,6 +57,13 @@ def test_sweep_receipt_accumulates_instability_counts(tmp_path, monkeypatch):
 
     def loader(*args, **kwargs): return Manifest()
     def models(manifest, device): return None, W(), M(), M()
+    return loader, models
+
+
+def test_sweep_receipt_accumulates_instability_counts(tmp_path, monkeypatch):
+    positions = tmp_path / "p.txt"
+    positions.write_text("x\n")
+    loader, models = _fake_runtime()
 
     class R:
         rows = ()
@@ -77,3 +81,34 @@ def test_sweep_receipt_accumulates_instability_counts(tmp_path, monkeypatch):
     rc = cli.main(["sweep", "--positions", str(positions), "--output", str(tmp_path / "r.json")], artifact_loader=loader, model_loader=models)
     assert rc == 0
     assert captured["instability_count"] == 28
+
+
+def test_orthogonal_command_writes_all_declared_runs(tmp_path, monkeypatch):
+    positions = tmp_path / "p.txt"
+    positions.write_text("x\n")
+    loader, models = _fake_runtime()
+
+    class Run:
+        lambda_value = 2.0
+        rows = ()
+        aggregate = {"positions": 1.0}
+
+    class Result:
+        rho = 0.75
+        seed = 0
+        runs = (Run(),)
+
+    monkeypatch.setattr(cli, "evaluate_orthogonal_positions", lambda *a, **k: Result())
+    captured = {}
+
+    def receipt(**kwargs):
+        captured.update(kwargs)
+        return {"x": 1}
+
+    monkeypatch.setattr(cli, "build_receipt", receipt)
+    monkeypatch.setattr(cli, "write_receipt", lambda *a, **k: None)
+    rc = cli.main(["orthogonal", "--positions", str(positions), "--output", str(tmp_path / "r.json")], artifact_loader=loader, model_loader=models)
+    assert rc == 0
+    assert captured["command"] == "orthogonal"
+    assert captured["results"]["settings"] == 1
+    assert captured["results"]["runs"][0]["lambda"] == 2.0
