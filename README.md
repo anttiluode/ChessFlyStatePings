@@ -97,13 +97,15 @@ The frozen ChessFly decoder is then evaluated on
 h_readout + lambda r_perp
 ```
 
-and compared with a matched shuffled control
+The matched control first permutes the entries of `r_perp`, projects the permutation back into the subspace orthogonal to `h_readout`, and rescales it to the original `||r_perp||`. Thus the real and shuffled conditions have the same perturbation energy and neither can sneak the present-state/amplitude direction back in:
 
 ```text
-h_readout + lambda shuffle(r_perp)
+u       = shuffle(r_perp)
+u_perp  = u - ((u · h) / (h · h + eps)) h
+control = ||r_perp|| * u_perp / (||u_perp|| + eps)
 ```
 
-The declared `lambda` sweep is `-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4`. The same deterministic shuffle is reused across all lambdas for a position.
+The declared `lambda` sweep is `-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4`. The same deterministic matched control is reused across all lambdas for a position.
 
 Each run records:
 
@@ -112,7 +114,7 @@ Each run records:
 - real versus shuffled move-change rates;
 - real versus shuffled legal-policy Jensen-Shannon divergence;
 - real versus shuffled absolute value shifts;
-- `real_minus_shuffled_js`, where positive means the real orthogonal direction perturbed the frozen decoder more than its shuffled control. This is **not** by itself a chess-strength score.
+- `real_minus_shuffled_js`, where positive means the real orthogonal direction perturbed the frozen decoder more than its matched shuffled control. This is **not** by itself a chess-strength score.
 
 Interpretation is deliberately narrow:
 
@@ -125,7 +127,7 @@ Interpretation is deliberately narrow:
 1. `probe`: observe unaltered settling dynamics.
 2. `compare`: measure the original recurrent StatePing intervention.
 3. `sweep`: retain the entire declared recurrent grid rather than cherry-picking.
-4. `orthogonal`: remove the present-state direction and compare real trajectory structure against a shuffled matched control.
+4. `orthogonal`: remove the present-state direction and compare real trajectory structure against a shuffled, re-orthogonalized, norm-matched control.
 5. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
 
 Stockfish is optional and intended for stricter move-quality checks; the baseline-vs-StatePing comparison and arena do not require it.
