@@ -129,3 +129,46 @@ def test_evaluate_orthogonal_positions_distinguishes_real_from_shuffled_directio
     assert run.aggregate["mean_abs_orthogonal_cosine"] < 1e-6
     assert run.aggregate["real_move_change_rate"] == 0.0
     assert run.aggregate["shuffled_move_change_rate"] == 1.0
+
+
+class StreamingModel(FakeDecodeModel):
+    def __init__(self, events):
+        super().__init__()
+        self.events = events
+
+    def forward(self, features, *, include_activity=False):
+        self.events.append("forward")
+        activity = (
+            torch.tensor([[1.0, 0.0, 0.0]]),
+            torch.tensor([[1.0, 1.0, 0.0]]),
+            torch.tensor([[1.0, 1.0, 1.0]]),
+        )
+        policy = torch.full((1, 1968), -10.0)
+        policy[0, ACTION_INDEX["e2e4"]] = 1.0
+        policy[0, ACTION_INDEX["d2d4"]] = 1.0
+        value = torch.zeros((1, 64))
+        return ForwardResult(policy, value, activity if include_activity else (), None)
+
+    def decode_readout(self, readout, *, activity=()):
+        self.events.append("decode")
+        return super().decode_readout(readout, activity=activity)
+
+
+def test_evaluator_streams_positions_before_requesting_the_next_fen():
+    events = []
+    fen = "4k3/8/8/8/8/8/8/4K3 w - - 0 1"
+
+    def positions():
+        yield fen
+        assert events.count("decode") >= 2
+        yield fen
+
+    evaluate_orthogonal_positions(
+        positions(),
+        StreamingModel(events),
+        rho=0.5,
+        lambdas=(1.0,),
+        seed=0,
+        board_factory=Board,
+    )
+    assert events.count("forward") == 2
