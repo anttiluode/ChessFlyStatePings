@@ -1,0 +1,110 @@
+{
+  "arguments": {
+    "cache_dir": null,
+    "command": "query-memory",
+    "device": "auto",
+    "model_revision": "main",
+    "output": "results\\query-memory-smoke.json",
+    "positions": "data/smoke_fens.txt",
+    "rho": 0.75,
+    "seed": 0,
+    "space_revision": "main"
+  },
+  "artifacts": {
+    "acquired_at_utc": "2026-10-01T16:01:45.762787+00:00",
+    "dataset": "FlyWire FAFB v783, Shiu et al. author release",
+    "files": [
+      {
+        "bytes": 47051343,
+        "decoded_sha256": "700a443c885ef2eec25f97136ea14b9a2575fb270321190f4edc4e6f5c49e13d",
+        "expected_decoded_sha256": "700a443c885ef2eec25f97136ea14b9a2575fb270321190f4edc4e6f5c49e13d",
+        "name": "connectome.bin.gz",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "a90aadf847f6939b306b2fe707134dc22213431b6eec3d5a7b4c45d62c98ff8a",
+        "source_url": "https://huggingface.co/spaces/mlabonne/chessfly/resolve/main/data/connectome.bin.gz"
+      },
+      {
+        "bytes": 1442541,
+        "decoded_sha256": "a245f2f2195ff82a4bd1af8dab70e9d213eca29fd5c7add607b3d983ed7bedfa",
+        "expected_decoded_sha256": "a245f2f2195ff82a4bd1af8dab70e9d213eca29fd5c7add607b3d983ed7bedfa",
+        "name": "neurons.bin.gz",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "4d801ed09ee0c4114ca7cae5a18b6ed2decc84dd115c9c30ae8f4a46a4294842",
+        "source_url": "https://huggingface.co/spaces/mlabonne/chessfly/resolve/main/data/neurons.bin.gz"
+      },
+      {
+        "bytes": 99572154,
+        "decoded_sha256": null,
+        "expected_decoded_sha256": null,
+        "name": "flynet.safetensors",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "e05a675c35726b6784c563f6c29ab3fe6afac249e0b143560286a81eab9380d5",
+        "source_url": "https://huggingface.co/mlabonne/chessfly/resolve/main/flynet.safetensors?download=true"
+      }
+    ],
+    "model_revision": "main",
+    "root": "C:\\Users\\antti\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\Local\\chessfly-statepings\\chessfly-statepings\\Cache\\artifacts",
+    "space_revision": "main"
+  },
+  "command": "query-memory",
+  "device": "cuda",
+  "git_commit": "94e5c8d67dd03631662627e78d5c73a3b1499404",
+  "inputs": [
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+    "8/8/8/3k4/8/4K3/8/8 w - - 0 1"
+  ],
+  "instability_count": 0,
+  "model": {
+    "alpha": 0.5,
+    "encoder_inputs": 10855,
+    "hidden": 512,
+    "readout_neurons": 41692,
+    "step": 12000,
+    "steps": 5
+  },
+  "results": {
+    "arms": {
+      "history": {
+        "accuracy": 0.3333333432674408,
+        "mean_correct_margin": -0.006119852419942617,
+        "mean_reciprocal_rank": 0.6111111640930176
+      },
+      "present": {
+        "accuracy": 1.0,
+        "mean_correct_margin": 0.006763865705579519,
+        "mean_reciprocal_rank": 1.0
+      },
+      "shuffled_history": {
+        "accuracy": 1.0,
+        "mean_correct_margin": 0.00539281964302063,
+        "mean_reciprocal_rank": 1.0
+      }
+    },
+    "history_minus_present": {
+      "accuracy": -0.6666666567325592,
+      "mean_correct_margin": -0.012883718125522137,
+      "mean_reciprocal_rank": -0.3888888359069824
+    },
+    "history_minus_shuffled": {
+      "accuracy": -0.6666666567325592,
+      "mean_correct_margin": -0.011512672062963247,
+      "mean_reciprocal_rank": -0.3888888359069824
+    },
+    "positions": 3,
+    "rho": 0.75,
+    "seed": 0
+  },
+  "schema": "chessfly-statepings-receipt-v1",
+  "timestamp_utc": "2026-10-01T17:59:03.902284+00:00",
+  "torch_threads": 6,
+  "versions": {
+    "python": "3.13.14",
+    "python_chess": "1.999",
+    "safetensors": "0.8.0",
+    "torch": "2.7.1+cu118"
+  }
+}

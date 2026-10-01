@@ -2,7 +2,7 @@
 
 `ChessFlyStatePings` is an experimental research harness around Maxime Labonne's published **ChessFly** model. It asks narrow questions inspired by `BrainAsInverseModelerV3` while keeping the trained checkpoint and fly-derived graph fixed.
 
-The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gates explicitly remove that present-state direction and ask whether the surviving trajectory direction is unusually readable.
+The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gates explicitly remove that present-state direction and ask whether the surviving trajectory direction is unusually readable. Gate 1b found suggestive reader-specific sensitivity in a three-position smoke test; Gate 2 then made the stronger "ping as query" metaphor literal and failed its first retrieval smoke test.
 
 This is **not** a claim that ChessFly is a biophysical fly brain or that Drosophila spikes use this code. ChessFly's units are artificial recurrent units wired by a fly-derived graph.
 
@@ -60,6 +60,12 @@ Run the directional-specificity gate against 32 matched controls, testing both s
 chessfly-statepings specificity --positions data/smoke_fens.txt --rho 0.75 --controls 32 --seed 0 --magnitudes 1 2 4
 ```
 
+Run the explicit history-query retrieval gate:
+
+```bash
+chessfly-statepings query-memory --positions data/smoke_fens.txt --rho 0.75 --seed 0
+```
+
 Run paired-color headless games using one raw network forward per move:
 
 ```bash
@@ -67,6 +73,8 @@ chessfly-statepings arena --games 20 --rho 0.75 --kappa 0.10
 ```
 
 Every nontrivial experiment writes a small JSON receipt containing configuration, versions, upstream artifact hashes/revisions, inputs, model metadata, results, and instability counts. Use `--output path.json` to choose its location.
+
+Real-run receipts and the current interpretation are kept under [`results/`](results/README.md).
 
 ## Gate 0: recurrent fast-minus-slow StatePing
 
@@ -139,7 +147,23 @@ Gate 1b records pre-softmax and post-softmax effects:
 - legal-policy Jensen-Shannon divergence;
 - the real direction's empirical percentile among matched controls for every metric.
 
-A real percentile near 0.5 means the trajectory direction is ordinary for that metric. Repeated high percentiles across many held-out positions would be evidence that the real temporal direction is aligned with something the frozen decoder reads unusually strongly. It is still not a chess-strength score.
+A real percentile near 0.5 means the trajectory direction is ordinary for that metric. The three-position CUDA smoke rerun placed the real direction around the 94th percentile for value-logit sensitivity and the 86th percentile at the shared association layer, but only around the 68th percentile for policy-logit sensitivity. That is preliminary evidence of receiver-specific readability, not a chess-strength result.
+
+## Gate 2: explicit query-memory retrieval
+
+Gate 2 tests a stronger claim: does the final state-bearing ping use its history coordinate as an address back into recorded settling history?
+
+For each position, the bank stores the penultimate settling state and its orthogonal history coordinate. The final state is then used as a query. Three fixed, untrained retrieval arms are compared:
+
+- present state only;
+- present plus the real orthogonal-history coordinate;
+- present plus a shuffled history coordinate from another position.
+
+The score is an equal-weight average of cosine similarities for present and history coordinates. Top-1 retrieval, mean reciprocal rank, and the correct-vs-best-distractor margin are recorded.
+
+The first three-position CUDA smoke test is a **negative result for this literal construction**. Present-only retrieval scored 1.0 top-1 accuracy and 1.0 MRR with a positive mean margin of +0.00676. Adding the real history coordinate reduced accuracy to about 0.333 and MRR to about 0.611, with a negative mean margin of -0.00612. The shuffled-history control remained at 1.0 accuracy/MRR with a +0.00539 margin.
+
+So the tested orthogonal history coordinate is not, by itself, a useful equal-weight cosine key to its own penultimate settling state. This narrows the interpretation of Gate 1b: **history being unusually readable by a trained downstream geometry is not the same claim as history being an explicit retrieval address under an imposed metric.** A different learned reader or memory geometry would be a different hypothesis and needs a different gate.
 
 ## Measurement order
 
@@ -148,7 +172,8 @@ A real percentile near 0.5 means the trajectory direction is ordinary for that m
 3. `sweep`: retain the entire declared recurrent grid rather than cherry-picking.
 4. `orthogonal`: remove the present-state direction and compare one real trajectory direction against one matched control.
 5. `specificity`: compare the real direction with many matched controls using both signs and pre-softmax metrics.
-6. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
+6. `query-memory`: test the stronger literal claim that the history-bearing ping retrieves its own recorded settling predecessor.
+7. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
 
 Stockfish is optional and intended for stricter move-quality checks; the baseline-vs-StatePing comparison and arena do not require it.
 
@@ -173,4 +198,4 @@ set CHESSFLY_RUN_INTEGRATION=1 && python -m pytest tests\test_integration_real.p
 
 ## Scientific boundary
 
-A positive result would show that the frozen ChessFly computation is unusually sensitive to a particular history-bearing direction under the tested readout geometry. It would not establish a biological waveform code, consciousness, or that a fly connectome is intrinsically suited to chess. A negative result is equally valid evidence for the tested coordinate under the frozen checkpoint.
+The current evidence separates two claims. Gate 1b suggests that a tiny orthogonal history direction can be unusually readable by some frozen downstream geometry. Gate 2 falsifies the first literal implementation of that direction as an explicit cosine retrieval address. Neither result establishes a biological waveform code, consciousness, learned attention, or that a fly connectome is intrinsically suited to chess. Negative results remain first-class evidence for the tested coordinate and reader.
