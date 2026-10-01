@@ -12,6 +12,7 @@ license = {text = "GPL-3.0-only"}
 authors = [{name = "Antti Luode"}]
 dependencies = [
   "torch>=2.0",
+  "numpy>=1.26",
   "safetensors>=0.4",
   "python-chess>=1.999",
   "platformdirs>=4.0",
