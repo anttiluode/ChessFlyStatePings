@@ -14,8 +14,14 @@ class OrthogonalHistory:
     current: torch.Tensor
     residue: torch.Tensor
     orthogonal: torch.Tensor
-    energy_ratio: torch.Tensor
+    norm_ratio: torch.Tensor
+    energy_fraction: torch.Tensor
     cosine: torch.Tensor
+
+    @property
+    def energy_ratio(self) -> torch.Tensor:
+        """Legacy alias retained for old receipt readers; this is a norm ratio."""
+        return self.norm_ratio
 
 
 @dataclass(frozen=True, slots=True)
@@ -33,6 +39,8 @@ class OrthogonalRow:
     shuffled_value: float
     real_value_delta: float
     shuffled_value_delta: float
+    orthogonal_norm_ratio: float
+    orthogonal_energy_fraction: float
     orthogonal_energy_ratio: float
     orthogonal_cosine: float
 
@@ -96,7 +104,7 @@ def orthogonal_history_readout(
     current_readout = activity[-1].index_select(1, idx)
     residue_readout = residue.index_select(1, idx)
     orthogonal, ratio, cosine = orthogonal_component(current_readout, residue_readout)
-    return OrthogonalHistory(current_readout, residue_readout, orthogonal, ratio, cosine)
+    return OrthogonalHistory(current_readout, residue_readout, orthogonal, ratio, ratio * ratio, cosine)
 
 
 def shuffled_like(values: torch.Tensor, *, seed: int) -> torch.Tensor:
@@ -207,6 +215,8 @@ def evaluate_orthogonal_positions(
                 control.policy_logits,
                 control.value_logits,
             )
+            norm_ratio = float(history.norm_ratio[0].item())
+            energy_fraction = float(history.energy_fraction[0].item())
             rows_by_run[run_index].append(
                 OrthogonalRow(
                     fen=fen,
@@ -222,7 +232,9 @@ def evaluate_orthogonal_positions(
                     shuffled_value=shuffled_value,
                     real_value_delta=real_value - baseline_value,
                     shuffled_value_delta=shuffled_value - baseline_value,
-                    orthogonal_energy_ratio=float(history.energy_ratio[0].item()),
+                    orthogonal_norm_ratio=norm_ratio,
+                    orthogonal_energy_fraction=energy_fraction,
+                    orthogonal_energy_ratio=norm_ratio,
                     orthogonal_cosine=float(history.cosine[0].item()),
                 )
             )
@@ -236,6 +248,8 @@ def evaluate_orthogonal_positions(
                 key: 0.0
                 for key in (
                     "positions",
+                    "mean_orthogonal_norm_ratio",
+                    "mean_orthogonal_energy_fraction",
                     "mean_orthogonal_energy_ratio",
                     "mean_abs_orthogonal_cosine",
                     "real_move_change_rate",
@@ -247,9 +261,12 @@ def evaluate_orthogonal_positions(
                 )
             }
         else:
+            mean_norm_ratio = sum(r.orthogonal_norm_ratio for r in rows) / n
             aggregate = {
                 "positions": float(n),
-                "mean_orthogonal_energy_ratio": sum(r.orthogonal_energy_ratio for r in rows) / n,
+                "mean_orthogonal_norm_ratio": mean_norm_ratio,
+                "mean_orthogonal_energy_fraction": sum(r.orthogonal_energy_fraction for r in rows) / n,
+                "mean_orthogonal_energy_ratio": mean_norm_ratio,
                 "mean_abs_orthogonal_cosine": sum(abs(r.orthogonal_cosine) for r in rows) / n,
                 "real_move_change_rate": sum(r.real_move_changed for r in rows) / n,
                 "shuffled_move_change_rate": sum(r.shuffled_move_changed for r in rows) / n,
