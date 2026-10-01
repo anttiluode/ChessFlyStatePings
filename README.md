@@ -2,7 +2,7 @@
 
 `ChessFlyStatePings` is an experimental research harness around Maxime Labonne's published **ChessFly** model. It asks narrow questions inspired by `BrainAsInverseModelerV3` while keeping the trained checkpoint and fly-derived graph fixed.
 
-The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gate explicitly removes that present-state direction before asking whether any structured history remains readable.
+The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gates explicitly remove that present-state direction and ask whether the surviving trajectory direction is unusually readable.
 
 This is **not** a claim that ChessFly is a biophysical fly brain or that Drosophila spikes use this code. ChessFly's units are artificial recurrent units wired by a fly-derived graph.
 
@@ -48,10 +48,16 @@ Run the full declared recurrent sweep (`rho` 0.25/0.50/0.75/0.90 × `kappa` -0.2
 chessfly-statepings sweep --positions data/smoke_fens.txt
 ```
 
-Run the orthogonal-history readout gate:
+Run the one-control orthogonal-history smoke gate:
 
 ```bash
 chessfly-statepings orthogonal --positions data/smoke_fens.txt --rho 0.75 --seed 0
+```
+
+Run the directional-specificity gate against 32 matched controls, testing both signs at each magnitude:
+
+```bash
+chessfly-statepings specificity --positions data/smoke_fens.txt --rho 0.75 --controls 32 --seed 0 --magnitudes 1 2 4
 ```
 
 Run paired-color headless games using one raw network forward per move:
@@ -85,7 +91,7 @@ The first real run found that `r_t` was almost parallel to `h_t` in the readout 
 
 ## Gate 1: orthogonal history readout
 
-The next gate leaves ChessFly's recurrence completely unchanged. At the final readout population it forms the same fast-minus-slow residue, then removes the component parallel to the current state:
+This gate leaves ChessFly's recurrence completely unchanged. At the final readout population it forms the same fast-minus-slow residue, then removes the component parallel to the current state:
 
 ```text
 r_perp = r - ((r · h) / (h · h + eps)) h
@@ -97,7 +103,7 @@ The frozen ChessFly decoder is then evaluated on
 h_readout + lambda r_perp
 ```
 
-The matched control first permutes the entries of `r_perp`, projects the permutation back into the subspace orthogonal to `h_readout`, and rescales it to the original `||r_perp||`. Thus the real and shuffled conditions have the same perturbation energy and neither can sneak the present-state/amplitude direction back in:
+The matched control first permutes the entries of `r_perp`, projects the permutation back into the subspace orthogonal to `h_readout`, and rescales it to the original `||r_perp||`. Thus the real and shuffled conditions have the same perturbation norm and neither can sneak the present-state/amplitude direction back in:
 
 ```text
 u       = shuffle(r_perp)
@@ -105,30 +111,44 @@ u_perp  = u - ((u · h) / (h · h + eps)) h
 control = ||r_perp|| * u_perp / (||u_perp|| + eps)
 ```
 
-The declared `lambda` sweep is `-4, -2, -1, -0.5, 0, 0.5, 1, 2, 4`. The same deterministic matched control is reused across all lambdas for a position.
+The original receipt field `mean_orthogonal_energy_ratio` was misnamed: it stores `||r_perp|| / ||r||`, which is a **norm ratio**. New receipts also report `mean_orthogonal_norm_ratio` and the true squared-energy fraction `mean_orthogonal_energy_fraction = mean((||r_perp|| / ||r||)^2)`. The legacy field remains for compatibility.
 
-Each run records:
+The first three-position smoke run found a mean orthogonal norm ratio of about 0.0303, yet some directions caused large frozen-decoder changes. It also exposed a sign confound: the real direction was potent for positive lambda on one position, while one matched shuffled direction was potent for negative lambda. That result motivates Gate 1b rather than a claim that the real trajectory direction is already privileged.
 
-- `mean_orthogonal_energy_ratio`: how much residue norm survives after removing the present-state direction;
-- `mean_abs_orthogonal_cosine`: a numerical correctness check that should be near zero;
-- real versus shuffled move-change rates;
-- real versus shuffled legal-policy Jensen-Shannon divergence;
-- real versus shuffled absolute value shifts;
-- `real_minus_shuffled_js`, where positive means the real orthogonal direction perturbed the frozen decoder more than its matched shuffled control. This is **not** by itself a chess-strength score.
+## Gate 1b: directional specificity
 
-Interpretation is deliberately narrow:
+Gate 1b asks a stricter question: is the real orthogonal-history direction unusually readable compared with **many** equally sized matched directions?
 
-- orthogonal energy near zero means this EMA history coordinate contains almost no independent readout direction;
-- substantial energy but real ≈ shuffled means an independent direction exists but the frozen decoder is not specially aligned to its structure;
-- a reproducible real-versus-shuffled difference means structured trajectory geometry survives beyond simple present-state amplitude and is readable by the frozen decoder.
+For each position it generates `N` shuffled, re-orthogonalized, norm-matched controls. For each magnitude `a`, it evaluates both signs:
+
+```text
+h + a v
+h - a v
+```
+
+and defines sign-symmetric sensitivity as the larger effect of the two signs. This prevents choosing the favorable sign after looking at the result.
+
+The default run uses 32 controls and magnitudes `1, 2, 4`. The expensive five-step ChessFly recurrence still runs only once per position. Real/control directions and both signs are batched through the frozen decoder.
+
+Gate 1b records pre-softmax and post-softmax effects:
+
+- centered legal-policy logit RMS change, invariant to a common logit shift;
+- absolute change in the legal top-1 versus top-2 logit margin;
+- centered value-logit RMS change and winning value bin;
+- relative change in the 512-dimensional decoder association vector;
+- legal-policy Jensen-Shannon divergence;
+- the real direction's empirical percentile among matched controls for every metric.
+
+A real percentile near 0.5 means the trajectory direction is ordinary for that metric. Repeated high percentiles across many held-out positions would be evidence that the real temporal direction is aligned with something the frozen decoder reads unusually strongly. It is still not a chess-strength score.
 
 ## Measurement order
 
 1. `probe`: observe unaltered settling dynamics.
 2. `compare`: measure the original recurrent StatePing intervention.
 3. `sweep`: retain the entire declared recurrent grid rather than cherry-picking.
-4. `orthogonal`: remove the present-state direction and compare real trajectory structure against a shuffled, re-orthogonalized, norm-matched control.
-5. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
+4. `orthogonal`: remove the present-state direction and compare one real trajectory direction against one matched control.
+5. `specificity`: compare the real direction with many matched controls using both signs and pre-softmax metrics.
+6. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
 
 Stockfish is optional and intended for stricter move-quality checks; the baseline-vs-StatePing comparison and arena do not require it.
 
@@ -153,4 +173,4 @@ set CHESSFLY_RUN_INTEGRATION=1 && python -m pytest tests\test_integration_real.p
 
 ## Scientific boundary
 
-A positive result would show that the frozen ChessFly computation is sensitive to a particular history-bearing coordinate. It would not establish a biological waveform code, consciousness, or that a fly connectome is intrinsically suited to chess. A negative or destabilizing result is equally valid evidence for the tested coordinate under the frozen checkpoint.
+A positive result would show that the frozen ChessFly computation is unusually sensitive to a particular history-bearing direction under the tested readout geometry. It would not establish a biological waveform code, consciousness, or that a fly connectome is intrinsically suited to chess. A negative result is equally valid evidence for the tested coordinate under the frozen checkpoint.
