@@ -171,7 +171,9 @@ def evaluate_orthogonal_positions(
     board_factory: Callable[[str], Any] | None = None,
 ) -> OrthogonalResult:
     factory = board_factory or _default_board_factory
-    prepared = []
+    lambda_values = tuple(float(value) for value in lambdas)
+    rows_by_run: list[list[OrthogonalRow]] = [[] for _ in lambda_values]
+
     for position_index, fen in enumerate(fens):
         board = factory(fen)
         canonical, mirrored = canonical_fen(board.fen())
@@ -195,25 +197,9 @@ def evaluate_orthogonal_positions(
             baseline.policy_logits,
             baseline.value_logits,
         )
-        prepared.append(
-            (
-                fen,
-                board,
-                mirrored,
-                history,
-                shuffled,
-                baseline_move,
-                baseline_probs,
-                baseline_value,
-            )
-        )
-
-    runs: list[OrthogonalRun] = []
-    for lambda_value in lambdas:
-        rows: list[OrthogonalRow] = []
-        for fen, board, mirrored, history, shuffled, baseline_move, baseline_probs, baseline_value in prepared:
-            real = model.decode_readout(history.current + float(lambda_value) * history.orthogonal)
-            control = model.decode_readout(history.current + float(lambda_value) * shuffled)
+        for run_index, lambda_value in enumerate(lambda_values):
+            real = model.decode_readout(history.current + lambda_value * history.orthogonal)
+            control = model.decode_readout(history.current + lambda_value * shuffled)
             real_move, real_probs, real_value = _decision(board, mirrored, real.policy_logits, real.value_logits)
             shuffled_move, shuffled_probs, shuffled_value = _decision(
                 board,
@@ -221,7 +207,7 @@ def evaluate_orthogonal_positions(
                 control.policy_logits,
                 control.value_logits,
             )
-            rows.append(
+            rows_by_run[run_index].append(
                 OrthogonalRow(
                     fen=fen,
                     baseline_move=baseline_move,
@@ -240,6 +226,10 @@ def evaluate_orthogonal_positions(
                     orthogonal_cosine=float(history.cosine[0].item()),
                 )
             )
+
+    runs: list[OrthogonalRun] = []
+    for lambda_value, row_list in zip(lambda_values, rows_by_run):
+        rows = tuple(row_list)
         n = len(rows)
         if n == 0:
             aggregate = {
@@ -271,7 +261,7 @@ def evaluate_orthogonal_positions(
         aggregate["real_minus_shuffled_js"] = (
             aggregate["mean_real_js_divergence"] - aggregate["mean_shuffled_js_divergence"]
         )
-        runs.append(OrthogonalRun(float(lambda_value), tuple(rows), aggregate))
+        runs.append(OrthogonalRun(lambda_value, rows, aggregate))
     return OrthogonalResult(float(rho), int(seed), tuple(runs))
 
 
