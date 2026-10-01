@@ -33,6 +33,13 @@ def resolve_device(device: str | torch.device = "auto") -> torch.device:
 
 
 @dataclass(frozen=True, slots=True)
+class ReadoutTrace:
+    association: torch.Tensor
+    policy_logits: torch.Tensor
+    value_logits: torch.Tensor
+
+
+@dataclass(frozen=True, slots=True)
 class ForwardResult:
     policy_logits: torch.Tensor | None
     value_logits: torch.Tensor | None
@@ -72,6 +79,27 @@ class ChessFlyBaseline:
         drive.index_copy_(1, self.input_index, encoded)
         return x, drive
 
+    def _readout_tensor(self, readout: Any) -> torch.Tensor:
+        readout_tensor = torch.as_tensor(readout, dtype=torch.float32, device=self.device)
+        if readout_tensor.ndim == 1:
+            readout_tensor = readout_tensor.unsqueeze(0)
+        if readout_tensor.ndim != 2 or readout_tensor.shape[1] != len(self.graph.readout):
+            raise ModelShapeError("readout must have shape [batch, readout_neurons]")
+        return readout_tensor
+
+    def decode_readout_trace(self, readout: Any) -> ReadoutTrace:
+        """Run the frozen decoder and expose its association state and both heads."""
+        readout_tensor = self._readout_tensor(readout)
+        association = F.gelu(
+            F.linear(readout_tensor, self.tensors["decoder.weight"], self.tensors["decoder.bias"]),
+            approximate="tanh",
+        )
+        return ReadoutTrace(
+            association=association,
+            policy_logits=F.linear(association, self.tensors["policy.weight"], self.tensors["policy.bias"]),
+            value_logits=F.linear(association, self.tensors["value.weight"], self.tensors["value.bias"]),
+        )
+
     def decode_readout(
         self,
         readout: Any,
@@ -79,18 +107,10 @@ class ChessFlyBaseline:
         activity: Sequence[torch.Tensor] = (),
     ) -> ForwardResult:
         """Run the frozen decoder and heads from an explicit readout-neuron state."""
-        readout_tensor = torch.as_tensor(readout, dtype=torch.float32, device=self.device)
-        if readout_tensor.ndim == 1:
-            readout_tensor = readout_tensor.unsqueeze(0)
-        if readout_tensor.ndim != 2 or readout_tensor.shape[1] != len(self.graph.readout):
-            raise ModelShapeError("readout must have shape [batch, readout_neurons]")
-        association = F.gelu(
-            F.linear(readout_tensor, self.tensors["decoder.weight"], self.tensors["decoder.bias"]),
-            approximate="tanh",
-        )
+        trace = self.decode_readout_trace(readout)
         return ForwardResult(
-            policy_logits=F.linear(association, self.tensors["policy.weight"], self.tensors["policy.bias"]),
-            value_logits=F.linear(association, self.tensors["value.weight"], self.tensors["value.bias"]),
+            policy_logits=trace.policy_logits,
+            value_logits=trace.value_logits,
             activity=tuple(activity),
             instability=None,
         )
@@ -115,4 +135,4 @@ class ChessFlyBaseline:
             return self._decode(hidden, activity)
 
 
-__all__ = ["ChessFlyBaseline", "DeviceError", "ForwardResult", "ModelShapeError", "resolve_device"]
+__all__ = ["ChessFlyBaseline", "DeviceError", "ForwardResult", "ModelShapeError", "ReadoutTrace", "resolve_device"]
