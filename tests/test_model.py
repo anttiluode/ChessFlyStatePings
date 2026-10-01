@@ -59,6 +59,16 @@ def test_baseline_accepts_batches():
     assert result.policy_logits.shape == (4, 1968)
 
 
+def test_decode_readout_trace_matches_frozen_heads_and_exposes_association():
+    model = ChessFlyBaseline(toy_graph(), toy_weights())
+    readout = torch.tensor([[2.0]])
+    trace = model.decode_readout_trace(readout)
+    decoded = model.decode_readout(readout)
+    assert trace.association.shape == (1, 2)
+    assert torch.equal(trace.policy_logits, decoded.policy_logits)
+    assert torch.equal(trace.value_logits, decoded.value_logits)
+
+
 def test_resolve_device_auto_and_explicit_unavailable_cuda():
     assert str(resolve_device("auto")) in {"cpu", "cuda"}
     if not torch.cuda.is_available():

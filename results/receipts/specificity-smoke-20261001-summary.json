@@ -1,0 +1,73 @@
+{
+  "source_run": {
+    "timestamp_utc": "2026-10-01T17:17:45.083615+00:00",
+    "git_commit": "172ef6e06eb9a92bec104dbe6067b90596e8b5c7",
+    "device": "cuda",
+    "positions": 3,
+    "controls_per_position": 32,
+    "rho": 0.75,
+    "seed": 0,
+    "magnitudes": [
+      1.0,
+      2.0,
+      4.0
+    ],
+    "instability_count": 0
+  },
+  "geometry": {
+    "mean_orthogonal_norm_ratio": 0.030317487195134163,
+    "mean_orthogonal_energy_fraction": 0.0009291617510219415,
+    "mean_abs_orthogonal_cosine": 1.8786755049404746e-06
+  },
+  "runs": [
+    {
+      "magnitude": 1.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9444444444444444,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.7121212121212122,
+      "mean_real_percentile_js_divergence": 0.7222222222222222,
+      "mean_real_association_rel_change": 0.04225844095731967,
+      "mean_control_association_rel_change": 0.032076284760675845,
+      "mean_real_value_logit_rms": 74.90166346232097,
+      "mean_control_value_logit_rms": 39.773806964357696,
+      "mean_real_policy_logit_rms": 30.65266291300456,
+      "mean_control_policy_logit_rms": 27.26760230710109,
+      "mean_real_js_divergence": 1.5415106227038146e-28,
+      "mean_control_js_divergence": 2.2577466534342115e-24
+    },
+    {
+      "magnitude": 2.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9444444444444444,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.6919191919191919,
+      "mean_real_percentile_js_divergence": 0.6919191919191919,
+      "mean_real_association_rel_change": 0.08454823496964707,
+      "mean_control_association_rel_change": 0.06399747126655736,
+      "mean_real_value_logit_rms": 149.81159210205078,
+      "mean_control_value_logit_rms": 79.57091161608696,
+      "mean_real_policy_logit_rms": 61.33531951904297,
+      "mean_control_policy_logit_rms": 54.562104910612106,
+      "mean_real_js_divergence": 0.04227049445250736,
+      "mean_control_js_divergence": 0.02163473596667386
+    },
+    {
+      "magnitude": 4.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9343434343434344,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.6414141414141414,
+      "mean_real_percentile_js_divergence": 0.6515151515151515,
+      "mean_real_association_rel_change": 0.1698243116713994,
+      "mean_control_association_rel_change": 0.12804208758057323,
+      "mean_real_value_logit_rms": 297.9301045735677,
+      "mean_control_value_logit_rms": 162.43098240097365,
+      "mean_real_policy_logit_rms": 122.23840840657552,
+      "mean_control_policy_logit_rms": 109.5804402033488,
+      "mean_real_js_divergence": 0.23104906018664842,
+      "mean_control_js_divergence": 0.0942299284841408
+    }
+  ],
+  "js_fix": "Verified on the real CUDA smoke rerun: all aggregate Jensen-Shannon values are finite after the float64 log-space implementation."
+}

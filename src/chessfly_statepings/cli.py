@@ -20,6 +20,7 @@ from .model import ChessFlyBaseline
 from .orthogonal import evaluate_orthogonal_positions
 from .policy import ChessFlyPolicy
 from .receipts import build_receipt, write_receipt
+from .specificity import evaluate_directional_specificity
 from .state_ping import StatePingModel, trajectory_summary
 from .weights import ChessFlyWeights
 
@@ -50,6 +51,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("sweep", help="run the declared rho/kappa grid over paired positions"); _common(p); p.add_argument("--positions", required=True)
     p = sub.add_parser("arena", help="paired-color raw-policy headless games"); _common(p); p.add_argument("--games", type=int, default=20); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--kappa", type=float, default=0.10); p.add_argument("--seed", type=int, default=0); p.add_argument("--max-plies", type=int, default=300); p.add_argument("--openings", default=None)
     p = sub.add_parser("orthogonal", help="test readout history after removing the present-state direction"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0)
+    p = sub.add_parser("specificity", help="rank the real orthogonal history direction against many matched controls"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
     return parser
 
 
@@ -124,6 +126,31 @@ def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] =
             ],
         }
         receipt=build_receipt(command="orthogonal",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "specificity":
+        fens=_read_fens(args.positions)
+        result=evaluate_directional_specificity(
+            fens,
+            baseline,
+            rho=args.rho,
+            magnitudes=args.magnitudes,
+            controls=args.controls,
+            seed=args.seed,
+        )
+        payload={
+            "rho":result.rho,
+            "seed":result.seed,
+            "controls":result.controls,
+            "settings":len(result.runs),
+            "runs":[
+                {
+                    "magnitude":run.magnitude,
+                    "aggregate":dict(run.aggregate),
+                    "rows":[asdict(row) for row in run.rows],
+                }
+                for run in result.runs
+            ],
+        }
+        receipt=build_receipt(command="specificity",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
     elif args.command == "arena":
         openings=_read_fens(args.openings) if args.openings else [START_FEN]
         arena=play_paired_arena(ChessFlyPolicy(baseline),ChessFlyPolicy(stateping,forward_kwargs={"rho":args.rho,"kappa":args.kappa}),openings=openings,games=args.games,max_plies=args.max_plies,seed=args.seed)
