@@ -179,7 +179,11 @@ def ensure_artifacts(cache_dir: str | Path | None = None, *, space_revision: str
     root.mkdir(parents=True, exist_ok=True)
     if paths.manifest.is_file() and not force:
         manifest = ArtifactManifest.read(paths.manifest)
-        if Path(manifest.root).resolve() == root.resolve():
+        if (
+            Path(manifest.root).resolve() == root.resolve()
+            and manifest.space_revision == space_revision
+            and manifest.model_revision == model_revision
+        ):
             manifest.verify()
             return manifest
     meta_url = f"{SPACE_BASE}/{space_revision}/data/meta.json"
