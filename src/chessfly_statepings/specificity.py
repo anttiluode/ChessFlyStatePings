@@ -114,15 +114,21 @@ def _legal_indices(board: Any, mirrored: bool, device: torch.device) -> torch.Te
 
 
 def _js_from_logits(base: torch.Tensor, perturbed: torch.Tensor) -> float:
-    p = torch.softmax(base.float(), dim=0)
-    q = torch.softmax(perturbed.float(), dim=0)
-    m = 0.5 * (p + q)
-    terms = torch.zeros_like(m)
-    mask = p > 0
-    terms[mask] += 0.5 * p[mask] * torch.log(p[mask] / m[mask])
-    mask = q > 0
-    terms[mask] += 0.5 * q[mask] * torch.log(q[mask] / m[mask])
-    return float(terms.sum().item())
+    """Numerically stable Jensen-Shannon divergence from logits.
+
+    Work in float64 log space so float32 subnormal probabilities cannot
+    underflow a second time when the mixture distribution is formed.
+    """
+    logp = torch.log_softmax(base.double(), dim=0)
+    logq = torch.log_softmax(perturbed.double(), dim=0)
+    logm = torch.logaddexp(logp, logq) - math.log(2.0)
+    p = torch.exp(logp)
+    q = torch.exp(logq)
+    zero = torch.zeros((), dtype=torch.float64, device=logp.device)
+    kl_pm = torch.sum(torch.where(p > 0, p * (logp - logm), zero))
+    kl_qm = torch.sum(torch.where(q > 0, q * (logq - logm), zero))
+    value = 0.5 * (kl_pm + kl_qm)
+    return float(torch.clamp(value, min=0.0, max=math.log(2.0)).item())
 
 
 def _margin(logits: torch.Tensor) -> float:
