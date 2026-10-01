@@ -1,0 +1,60 @@
+{
+  "source_run": {
+    "timestamp_utc": "2026-10-01T17:07:39.538257+00:00",
+    "git_commit": "653bdf82002256b651ff59cd8c9b7cd56f909b71",
+    "device": "cuda",
+    "positions": 3,
+    "controls_per_position": 32,
+    "rho": 0.75,
+    "seed": 0,
+    "magnitudes": [1.0, 2.0, 4.0],
+    "instability_count": 0
+  },
+  "geometry": {
+    "mean_orthogonal_norm_ratio": 0.03031748781601588,
+    "mean_orthogonal_energy_fraction": 0.0009291617704244951,
+    "mean_abs_orthogonal_cosine": 1.0148742338363566e-06
+  },
+  "runs": [
+    {
+      "magnitude": 1.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9444444444444444,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.7121212121212122,
+      "mean_real_association_rel_change": 0.04225837602572538,
+      "mean_control_association_rel_change": 0.032076285342726246,
+      "mean_real_value_logit_rms": 74.90144602457683,
+      "mean_control_value_logit_rms": 39.773760875066124,
+      "mean_real_policy_logit_rms": 30.6526304880778,
+      "mean_control_policy_logit_rms": 27.267604507505894
+    },
+    {
+      "magnitude": 2.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9444444444444444,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.6919191919191919,
+      "mean_real_association_rel_change": 0.08454825819866095,
+      "mean_control_association_rel_change": 0.06399748395535927,
+      "mean_real_value_logit_rms": 149.81131744384766,
+      "mean_control_value_logit_rms": 79.57089098791282,
+      "mean_real_policy_logit_rms": 61.33534367879232,
+      "mean_control_policy_logit_rms": 54.56211055318514
+    },
+    {
+      "magnitude": 4.0,
+      "mean_real_percentile_association_rel_change": 0.8636363636363636,
+      "mean_real_percentile_value_logit_rms": 0.9343434343434344,
+      "mean_real_percentile_policy_logit_rms": 0.6818181818181818,
+      "mean_real_percentile_margin_abs_delta": 0.6414141414141414,
+      "mean_real_association_rel_change": 0.1698242838304009,
+      "mean_control_association_rel_change": 0.12804211196284804,
+      "mean_real_value_logit_rms": 297.9298604329427,
+      "mean_control_value_logit_rms": 162.43105682730675,
+      "mean_real_policy_logit_rms": 122.23828887939453,
+      "mean_control_policy_logit_rms": 109.58044848839442
+    }
+  ],
+  "caveat": "The original smoke receipt emitted NaN for some control Jensen-Shannon means because the float32 JS implementation underflowed on subnormal softmax tails. The site therefore emphasizes finite pre-softmax metrics. A log-space JS fix was added after this run and should be rerun before using JS aggregates."
+}
