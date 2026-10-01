@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any
+from typing import Any, Sequence
 
 import torch
 import torch.nn.functional as F
@@ -72,15 +72,32 @@ class ChessFlyBaseline:
         drive.index_copy_(1, self.input_index, encoded)
         return x, drive
 
-    def _decode(self, hidden: torch.Tensor, activity: list[torch.Tensor]) -> ForwardResult:
-        readout = hidden.index_select(1, self.readout_index)
-        association = F.gelu(F.linear(readout, self.tensors["decoder.weight"], self.tensors["decoder.bias"]), approximate="tanh")
+    def decode_readout(
+        self,
+        readout: Any,
+        *,
+        activity: Sequence[torch.Tensor] = (),
+    ) -> ForwardResult:
+        """Run the frozen decoder and heads from an explicit readout-neuron state."""
+        readout_tensor = torch.as_tensor(readout, dtype=torch.float32, device=self.device)
+        if readout_tensor.ndim == 1:
+            readout_tensor = readout_tensor.unsqueeze(0)
+        if readout_tensor.ndim != 2 or readout_tensor.shape[1] != len(self.graph.readout):
+            raise ModelShapeError("readout must have shape [batch, readout_neurons]")
+        association = F.gelu(
+            F.linear(readout_tensor, self.tensors["decoder.weight"], self.tensors["decoder.bias"]),
+            approximate="tanh",
+        )
         return ForwardResult(
             policy_logits=F.linear(association, self.tensors["policy.weight"], self.tensors["policy.bias"]),
             value_logits=F.linear(association, self.tensors["value.weight"], self.tensors["value.bias"]),
             activity=tuple(activity),
             instability=None,
         )
+
+    def _decode(self, hidden: torch.Tensor, activity: list[torch.Tensor]) -> ForwardResult:
+        readout = hidden.index_select(1, self.readout_index)
+        return self.decode_readout(readout, activity=activity)
 
     def forward(self, features: Any, *, include_activity: bool = False) -> ForwardResult:
         with torch.inference_mode():
