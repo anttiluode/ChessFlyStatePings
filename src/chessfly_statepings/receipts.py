@@ -42,6 +42,7 @@ def build_receipt(*, command: str, arguments: Mapping[str, Any], device: str, ar
             "safetensors": _version("safetensors"),
         },
         "device": device,
+        "torch_threads": int(torch.get_num_threads()),
         "artifacts": artifacts,
         "model": dict(model_metadata),
         "inputs": list(inputs),
