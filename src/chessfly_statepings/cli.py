@@ -19,6 +19,7 @@ from .graph import ChessFlyGraph
 from .model import ChessFlyBaseline
 from .orthogonal import evaluate_orthogonal_positions
 from .policy import ChessFlyPolicy
+from .query_memory import evaluate_query_memory
 from .receipts import build_receipt, write_receipt
 from .specificity import evaluate_directional_specificity
 from .state_ping import StatePingModel, trajectory_summary
@@ -52,6 +53,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("arena", help="paired-color raw-policy headless games"); _common(p); p.add_argument("--games", type=int, default=20); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--kappa", type=float, default=0.10); p.add_argument("--seed", type=int, default=0); p.add_argument("--max-plies", type=int, default=300); p.add_argument("--openings", default=None)
     p = sub.add_parser("orthogonal", help="test readout history after removing the present-state direction"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0)
     p = sub.add_parser("specificity", help="rank the real orthogonal history direction against many matched controls"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
+    p = sub.add_parser("query-memory", help="ask whether the final state-bearing ping retrieves its own recorded settling history"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0)
     return parser
 
 
@@ -82,6 +84,14 @@ def _output_path(command: str, requested: str | None) -> Path:
 
 def _acquire(args, loader):
     return loader(args.cache_dir, space_revision=args.space_revision, model_revision=args.model_revision, force=getattr(args,"force",False))
+
+
+def _retrieval_payload(metrics: Any) -> dict[str, float]:
+    return {
+        "accuracy": float(metrics.accuracy),
+        "mean_reciprocal_rank": float(metrics.mean_reciprocal_rank),
+        "mean_correct_margin": float(metrics.mean_correct_margin),
+    }
 
 
 def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] = ensure_artifacts, model_loader: Callable[..., Any] = _load_models) -> int:
@@ -151,6 +161,27 @@ def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] =
             ],
         }
         receipt=build_receipt(command="specificity",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "query-memory":
+        fens=_read_fens(args.positions)
+        result=evaluate_query_memory(fens, baseline, rho=args.rho, seed=args.seed)
+        arms={
+            "present":_retrieval_payload(result.present),
+            "history":_retrieval_payload(result.history),
+            "shuffled_history":_retrieval_payload(result.shuffled_history),
+        }
+        payload={
+            "rho":result.rho,
+            "seed":result.seed,
+            "positions":result.positions,
+            "arms":arms,
+            "history_minus_present":{
+                key: arms["history"][key] - arms["present"][key] for key in arms["history"]
+            },
+            "history_minus_shuffled":{
+                key: arms["history"][key] - arms["shuffled_history"][key] for key in arms["history"]
+            },
+        }
+        receipt=build_receipt(command="query-memory",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
     elif args.command == "arena":
         openings=_read_fens(args.openings) if args.openings else [START_FEN]
         arena=play_paired_arena(ChessFlyPolicy(baseline),ChessFlyPolicy(stateping,forward_kwargs={"rho":args.rho,"kappa":args.kappa}),openings=openings,games=args.games,max_plies=args.max_plies,seed=args.seed)
