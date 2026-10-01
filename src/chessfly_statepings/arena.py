@@ -63,14 +63,14 @@ def _play_game(
         try:
             decision = policies[current_name].select(board)
         except Exception as exc:
-            if not isinstance(exc, (PolicyError, RuntimeError, ValueError)):
+            if not isinstance(exc, PolicyError):
                 raise
             result = _result_for_forfeit(board)
             return ArenaGame(opening, white_name, black_name, result, plies, current_name), disagreements, compared
         try:
             other = policies[other_name].select(board)
         except Exception as exc:
-            if not isinstance(exc, (PolicyError, RuntimeError, ValueError)):
+            if not isinstance(exc, PolicyError):
                 raise
         else:
             compared += 1
