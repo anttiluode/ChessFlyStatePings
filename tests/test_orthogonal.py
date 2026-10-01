@@ -30,17 +30,18 @@ def test_zero_present_state_leaves_residue_unchanged():
     assert torch.allclose(cosine, torch.zeros(1))
 
 
-def test_history_readout_uses_final_readout_subspace():
+def test_history_readout_reports_norm_ratio_and_squared_energy_fraction():
     activity = (
         torch.tensor([[1.0, 0.0]]),
         torch.tensor([[1.0, 1.0]]),
         torch.tensor([[1.0, 2.0]]),
     )
-    state = orthogonal_history_readout(activity, rho=0.5, readout_indices=torch.tensor([1]))
-    assert state.current.shape == (1, 1)
-    assert torch.allclose(state.current, torch.tensor([[2.0]]))
-    assert state.orthogonal.shape == (1, 1)
-    assert torch.allclose(state.orthogonal, torch.zeros((1, 1)), atol=1e-6)
+    state = orthogonal_history_readout(activity, rho=0.5, readout_indices=torch.tensor([0, 1]))
+    assert state.current.shape == (1, 2)
+    assert state.orthogonal.shape == (1, 2)
+    assert torch.allclose(state.energy_fraction, state.norm_ratio * state.norm_ratio, atol=1e-7)
+    # Legacy property remains available for old receipt readers, but its value is a norm ratio.
+    assert torch.equal(state.energy_ratio, state.norm_ratio)
 
 
 def test_shuffle_is_deterministic_and_norm_preserving():
@@ -125,7 +126,8 @@ def test_evaluate_orthogonal_positions_distinguishes_real_from_shuffled_directio
     )
     run = result.runs[0]
     assert run.aggregate["positions"] == 1.0
-    assert run.aggregate["mean_orthogonal_energy_ratio"] > 0
+    assert run.aggregate["mean_orthogonal_norm_ratio"] > 0
+    assert run.aggregate["mean_orthogonal_energy_fraction"] >= 0
     assert run.aggregate["mean_abs_orthogonal_cosine"] < 1e-6
     assert run.aggregate["real_move_change_rate"] == 0.0
     assert run.aggregate["shuffled_move_change_rate"] == 1.0
