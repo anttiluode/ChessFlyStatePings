@@ -6,6 +6,7 @@ from chessfly_statepings.orthogonal import (
     orthogonal_component,
     orthogonal_history_readout,
     shuffled_like,
+    shuffled_orthogonal_control,
 )
 from chessfly_statepings.encoding import ACTION_INDEX
 from test_model import toy_graph, toy_weights
@@ -49,6 +50,19 @@ def test_shuffle_is_deterministic_and_norm_preserving():
     assert torch.equal(first, second)
     assert torch.allclose(torch.linalg.vector_norm(first, dim=1), torch.linalg.vector_norm(values, dim=1))
     assert not torch.equal(first, values)
+
+
+def test_shuffled_orthogonal_control_stays_orthogonal_and_energy_matched():
+    h = torch.tensor([[1.0, 2.0, 3.0, 4.0]])
+    orthogonal = torch.tensor([[2.0, -1.0, 0.0, 0.0]])
+    control = shuffled_orthogonal_control(h, orthogonal, seed=3)
+    assert abs(float(torch.sum(h * control).item())) < 1e-6
+    assert torch.allclose(
+        torch.linalg.vector_norm(control, dim=1),
+        torch.linalg.vector_norm(orthogonal, dim=1),
+        atol=1e-6,
+    )
+    assert not torch.equal(control, orthogonal)
 
 
 def test_decode_readout_matches_baseline_final_decode():
