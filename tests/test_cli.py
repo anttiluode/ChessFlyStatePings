@@ -5,7 +5,7 @@ from chessfly_statepings import cli
 
 def test_cli_has_all_v0_commands():
     parser = cli.build_parser()
-    for argv in (["assets"], ["probe", "--fen", "x"], ["compare", "--positions", "p"], ["sweep", "--positions", "p"], ["arena", "--games", "2"]):
+    for argv in (["assets"], ["probe", "--fen", "x"], ["compare", "--positions", "p"], ["sweep", "--positions", "p"], ["arena", "--games", "2"], ["orthogonal", "--positions", "p"]):
         args = parser.parse_args(argv)
         assert args.command == argv[0]
 
