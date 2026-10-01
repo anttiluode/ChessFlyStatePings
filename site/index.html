@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="ChessFlyStatePings: directional history readout results on the frozen ChessFly model.">
-  <title>ChessFlyStatePings — Gate 1b results</title>
+  <meta name="description" content="ChessFlyStatePings: directional history readout and explicit query-memory results on the frozen ChessFly model.">
+  <title>ChessFlyStatePings — Gate 1b + Gate 2 results</title>
   <style>
     :root{color-scheme:dark;--bg:#080b10;--panel:#111821;--ink:#edf6ff;--muted:#91a4b7;--line:#263446;--accent:#68e0cf;--accent2:#84a9ff;--good:#a7f3d0;--warn:#ffd27a}
     *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -16,25 +16,25 @@
     .metric{grid-column:span 3}.half{grid-column:span 6}.wide{grid-column:span 12}.big{font:750 2rem/1 system-ui,sans-serif;letter-spacing:-.04em;margin:.5rem 0}.label{color:var(--muted);font-size:.78rem;text-transform:uppercase;letter-spacing:.08em}.note{color:var(--muted);font-size:.88rem}
     .barrow{display:grid;grid-template-columns:145px 1fr 64px;gap:12px;align-items:center;margin:11px 0}.track{height:10px;background:#0a0f15;border-radius:99px;overflow:hidden;border:1px solid #223043}.fill{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent))}
     table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{color:#aec0d1;font-weight:600}
-    .callout{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:24px 0}.verified{border-color:var(--good)}.equation{font-size:1.05rem;color:#eaf8ff;background:#0a1017;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto}
+    .callout{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:24px 0}.verified{border-color:var(--good)}.negative{border-color:var(--warn)}.equation{font-size:1.05rem;color:#eaf8ff;background:#0a1017;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto}
     footer{margin-top:52px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}@media(max-width:820px){.metric,.half{grid-column:span 12}.barrow{grid-template-columns:110px 1fr 54px}table{font-size:.78rem}}
   </style>
 </head>
 <body>
 <main class="wrap">
-  <div class="eyebrow">ChessFlyStatePings / Gate 1b / post-fix CUDA rerun</div>
-  <h1>Does the fly-derived network care <em>which way</em> history points?</h1>
-  <p class="lead">We froze ChessFly's checkpoint, connectome-derived graph, five-step recurrence, decoder and heads. We then removed the present-state direction from a fast-minus-slow trajectory residue and compared the remaining temporal direction with 32 shuffled, re-orthogonalized, norm-matched controls.</p>
-  <span class="pill">3 smoke positions</span><span class="pill">32 controls / position</span><span class="pill">both signs</span><span class="pill">magnitudes 1, 2, 4</span><span class="pill">CUDA</span><span class="pill">0 instabilities</span><span class="pill">JS fix verified</span>
+  <div class="eyebrow">ChessFlyStatePings / Gate 1b + Gate 2 / CUDA smoke results</div>
+  <h1>History is readable. Is it also a <em>retrieval key</em>?</h1>
+  <p class="lead">Gate 1b found that a tiny temporal direction can be unusually readable by some frozen ChessFly heads. Gate 2 then made the stronger “ping as query” metaphor literal: use that history coordinate to retrieve the ping's own penultimate settling state. The first retrieval smoke test failed.</p>
+  <span class="pill">3 smoke positions</span><span class="pill">frozen checkpoint</span><span class="pill">CUDA</span><span class="pill">0 instabilities</span><span class="pill">negative Gate 2 result retained</span>
 
   <section class="grid">
-    <div class="card metric"><div class="label">orthogonal norm survives</div><div class="big">3.03%</div><div class="note">mean ||r⊥|| / ||r||</div></div>
-    <div class="card metric"><div class="label">squared energy survives</div><div class="big">0.0929%</div><div class="note">mean (||r⊥|| / ||r||)²</div></div>
-    <div class="card metric"><div class="label">value-head percentile</div><div class="big">94.4%</div><div class="note">mean at |λ| = 1 and 2</div></div>
-    <div class="card metric"><div class="label">association percentile</div><div class="big">86.4%</div><div class="note">same at all three magnitudes</div></div>
+    <div class="card metric"><div class="label">orthogonal norm survives</div><div class="big">3.03%</div><div class="note">Gate 1b mean ||r⊥|| / ||r||</div></div>
+    <div class="card metric"><div class="label">squared energy survives</div><div class="big">0.0929%</div><div class="note">Gate 1b mean squared fraction</div></div>
+    <div class="card metric"><div class="label">value-head percentile</div><div class="big">94.4%</div><div class="note">Gate 1b at |λ| = 1 and 2</div></div>
+    <div class="card metric"><div class="label">Gate 2 history accuracy</div><div class="big">33.3%</div><div class="note">present-only was 100%</div></div>
 
     <div class="card half">
-      <h2>Directional specificity</h2>
+      <h2>Gate 1b: directional specificity</h2>
       <p class="note">Mean percentile of the real temporal direction among 32 matched control directions. 50% is ordinary.</p>
       <div class="barrow"><span>value logits</span><div class="track"><div class="fill" style="width:94.4%"></div></div><strong>94.4</strong></div>
       <div class="barrow"><span>association</span><div class="track"><div class="fill" style="width:86.4%"></div></div><strong>86.4</strong></div>
@@ -44,14 +44,14 @@
     </div>
 
     <div class="card half">
-      <h2>Receiver dependence</h2>
+      <h2>Gate 1b: receiver dependence</h2>
       <p>The same transverse history direction is much more unusual to the <b>value head</b> than to the <b>policy head</b>. At |λ|=2, real value-logit RMS sensitivity is about <b>1.88×</b> the mean matched-control sensitivity, association change is <b>1.32×</b>, and policy-logit RMS is only <b>1.12×</b>.</p>
       <div class="equation">state present ≠ state equally readable by every downstream head</div>
       <p class="note">This is an artificial-network readout result, not evidence for a biological spike code.</p>
     </div>
 
     <div class="card wide">
-      <h2>Post-fix smoke summary</h2>
+      <h2>Gate 1b post-fix smoke summary</h2>
       <table>
         <thead><tr><th>|λ|</th><th>association %ile</th><th>value %ile</th><th>policy %ile</th><th>JS %ile</th><th>real/control assoc.</th><th>real/control value</th><th>real/control policy</th></tr></thead>
         <tbody>
@@ -60,30 +60,46 @@
           <tr><td>4</td><td>86.4%</td><td>93.4%</td><td>68.2%</td><td>65.2%</td><td>1.33×</td><td>1.83×</td><td>1.12×</td></tr>
         </tbody>
       </table>
-      <p class="note">JS is now numerically finite. Its percentile is only moderate, while the pre-softmax value-logit metric stays near the top of the matched-control distribution.</p>
+      <p class="note">JS is numerically finite after the float64 log-space fix. The pre-softmax value-logit metric remains the strongest specificity signal.</p>
     </div>
 
     <div class="card wide">
-      <h2>What the three positions did</h2>
-      <p>At |λ|=2 the real direction's value-logit percentile was 92.4%, 92.4%, and 98.5% across the starting, early-game, and king-only positions. The association-layer percentiles were 71.2%, 89.4%, and 98.5%. The endgame position also reached the 92.4th percentile for policy-logit sensitivity.</p>
-      <p>In the starting position, +2 changed the winning value bin from 43 to 37 while leaving the selected move unchanged; at +4 it changed both the value bin and the selected move. In the second position, +4 changed the value bin without changing the selected move. That remains the clearest current example of two frozen heads reading the same altered latent state differently.</p>
+      <h2>Gate 2: make “ping as query” literal</h2>
+      <p>For each position, the bank stores the penultimate settling state and its orthogonal history coordinate. The final state-bearing ping tries to retrieve its own predecessor. Present and history coordinates use fixed cosine similarity; the history arm averages them equally.</p>
+      <table>
+        <thead><tr><th>retrieval arm</th><th>top-1 accuracy</th><th>MRR</th><th>correct − best distractor margin</th></tr></thead>
+        <tbody>
+          <tr><td>present state only</td><td>100.0%</td><td>1.000</td><td>+0.006764</td></tr>
+          <tr><td>present + real history</td><td>33.3%</td><td>0.611</td><td>−0.006120</td></tr>
+          <tr><td>present + shuffled history</td><td>100.0%</td><td>1.000</td><td>+0.005393</td></tr>
+        </tbody>
+      </table>
+      <div class="callout negative"><h3>Falsifier fired</h3><p>The real history coordinate did not retrieve its own recorded settling predecessor better. It made retrieval worse than both present-only and shuffled-history controls, and the mean correct margin became negative. This rejects the literal Gate 2 coordinate/metric on this smoke set.</p></div>
     </div>
 
     <div class="card wide">
-      <div class="callout"><h3>Current reading</h3><p>The orthogonal temporal component is tiny in norm, but it is not behaving like a generic matched direction. In this three-position smoke test it is consistently high-ranked for value-head sensitivity and moderately high-ranked at the shared association layer. The policy head is less special. This supports a larger held-out position test; it does not yet establish chess-strength improvement or a general biological mechanism.</p></div>
-      <div class="callout verified"><h3>Numerical issue closed</h3><p>The first smoke run exposed a float32 Jensen–Shannon underflow on subnormal softmax tails. JS is now evaluated in float64 log space. The rerun at the fixed implementation head produced finite JS aggregates at all three magnitudes and reproduced the pre-softmax specificity pattern.</p></div>
+      <h2>What changed conceptually</h2>
+      <p>Gate 1b and Gate 2 now separate two ideas that were easy to blur together. A history-bearing direction can be <b>readable by trained downstream geometry</b> without being a good <b>explicit content-addressable key</b> under an imposed cosine metric. The first survived its smoke test; the second did not.</p>
+      <div class="equation">history readable by a learned receiver ≠ history is a retrieval key</div>
+      <p>That leaves a narrower next question: if a ping acts query-like in a biological or learned system, the relevant reader/geometry may itself have to be learned for retrieval. This experiment does not test transformer attention, biological episodic memory, or consciousness.</p>
+    </div>
+
+    <div class="card wide">
+      <div class="callout"><h3>Current reading</h3><p>The useful result tonight is the split. Gate 1b says the tiny orthogonal temporal component is not generic to every frozen reader. Gate 2 says we cannot jump from that to “the ping searches recorded histories” using this explicit memory bank and equal-weight cosine score. The stronger metaphor was tested and lost.</p></div>
+      <div class="callout verified"><h3>Receipts retained</h3><p>Both positive-looking and negative smoke results are committed under <code>results/receipts/</code>, including exact model/artifact metadata. Both are preliminary n=3 measurements and remain bounded to the tested frozen checkpoint and coordinate construction.</p></div>
     </div>
   </section>
 
   <section>
-    <h2>The gate</h2>
+    <h2>The Gate 1b coordinate</h2>
     <div class="equation">r⊥ = r − ((r · h) / (h · h + ε)) h</div>
-    <p>Each shuffled control is permuted, re-orthogonalized against h, and rescaled to ||r⊥||. Every real/control direction is evaluated at both +λ and −λ; the larger effect is retained, preventing sign cherry-picking.</p>
+    <p>Each shuffled Gate 1b control is permuted, re-orthogonalized against h, and rescaled to ||r⊥||. Gate 2 reuses this coordinate but changes the question from downstream sensitivity to explicit memory retrieval.</p>
   </section>
 
   <footer>
-    <div>Verified run commit: <code>172ef6e06eb9a92bec104dbe6067b90596e8b5c7</code> · 2026-10-01 17:17:45 UTC · rho 0.75 · 32 controls · seed 0</div>
-    <div>Preliminary n=3 smoke result. Larger-position replication is the next scientific gate.</div>
+    <div>Gate 1b verified run: <code>172ef6e06eb9a92bec104dbe6067b90596e8b5c7</code> · 2026-10-01 17:17:45 UTC</div>
+    <div>Gate 2 verified run: <code>94e5c8d67dd03631662627e78d5c73a3b1499404</code> · 2026-10-01 17:59:03 UTC · rho 0.75 · seed 0</div>
+    <div>Both are preliminary n=3 smoke results. Negative results are retained rather than optimized away.</div>
   </footer>
 </main>
 </body>
