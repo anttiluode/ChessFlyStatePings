@@ -5,6 +5,7 @@ import torch
 
 from chessfly_statepings.encoding import ACTION_INDEX
 from chessfly_statepings.specificity import (
+    _js_from_logits,
     centered_rms_delta,
     empirical_percentile,
     evaluate_directional_specificity,
@@ -22,6 +23,17 @@ def test_centered_rms_ignores_common_logit_shift():
     base = torch.tensor([1.0, 2.0, 4.0])
     shifted = base + 10.0
     assert centered_rms_delta(base, shifted) == 0.0
+
+
+def test_js_divergence_stays_finite_for_subnormal_softmax_tail():
+    # In float32, softmax([0, -103]) leaves the second probability at the
+    # smallest subnormal value, while halving it to form m underflows to zero.
+    # The direct p * log(p/m) formula therefore produced NaN in the real run.
+    base = torch.tensor([0.0, -103.0])
+    perturbed = torch.tensor([0.0, -1000.0])
+    value = _js_from_logits(base, perturbed)
+    assert math.isfinite(value)
+    assert value >= 0.0
 
 
 def test_sign_symmetric_takes_larger_signed_effect():
