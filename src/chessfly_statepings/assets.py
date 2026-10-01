@@ -183,7 +183,7 @@ def ensure_artifacts(cache_dir: str | Path | None = None, *, space_revision: str
             manifest.verify()
             return manifest
     meta_url = f"{SPACE_BASE}/{space_revision}/data/meta.json"
-    meta_bytes, meta_headers = _fetch_bytes(meta_url)
+    meta_bytes, _meta_headers = _fetch_bytes(meta_url)
     try:
         meta = json.loads(meta_bytes.decode("utf-8"))
     except (UnicodeDecodeError, json.JSONDecodeError) as exc:
@@ -199,7 +199,7 @@ def ensure_artifacts(cache_dir: str | Path | None = None, *, space_revision: str
         for name, destination, url, requested, expected_raw in specs:
             payload, headers = _fetch_bytes(url)
             digest, decoded_sha = _atomic_write_verified(destination, payload, expected_decoded_sha256=expected_raw)
-            records.append(ArtifactRecord(name=name, source_url=url, requested_revision=requested, resolved_revision=headers.get("x-repo-commit") or meta_headers.get("x-repo-commit"), bytes=len(payload), sha256=digest, decoded_sha256=decoded_sha, expected_decoded_sha256=expected_raw))
+            records.append(ArtifactRecord(name=name, source_url=url, requested_revision=requested, resolved_revision=headers.get("x-repo-commit"), bytes=len(payload), sha256=digest, decoded_sha256=decoded_sha, expected_decoded_sha256=expected_raw))
     except Exception:
         paths.manifest.unlink(missing_ok=True)
         raise
