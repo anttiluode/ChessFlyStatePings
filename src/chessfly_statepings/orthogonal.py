@@ -108,6 +108,22 @@ def shuffled_like(values: torch.Tensor, *, seed: int) -> torch.Tensor:
     return values.index_select(1, permutation)
 
 
+def shuffled_orthogonal_control(
+    current: torch.Tensor,
+    orthogonal: torch.Tensor,
+    *,
+    seed: int,
+    eps: float = 1e-12,
+) -> torch.Tensor:
+    """Shuffle the history direction, then restore orthogonality and original norm."""
+    shuffled = shuffled_like(orthogonal, seed=seed)
+    control, _ratio, _cosine = orthogonal_component(current, shuffled, eps=eps)
+    target_norm = torch.linalg.vector_norm(orthogonal, dim=1, keepdim=True)
+    control_norm = torch.linalg.vector_norm(control, dim=1, keepdim=True)
+    scale = torch.where(control_norm > eps, target_norm / control_norm, torch.zeros_like(control_norm))
+    return control * scale
+
+
 def _default_board_factory(fen: str):
     try:
         import chess
@@ -168,7 +184,11 @@ def evaluate_orthogonal_positions(
             rho=rho,
             readout_indices=model.readout_index,
         )
-        shuffled = shuffled_like(history.orthogonal, seed=int(seed) + position_index)
+        shuffled = shuffled_orthogonal_control(
+            history.current,
+            history.orthogonal,
+            seed=int(seed) + position_index,
+        )
         baseline_move, baseline_probs, baseline_value = _decision(
             board,
             mirrored,
@@ -264,4 +284,5 @@ __all__ = [
     "orthogonal_component",
     "orthogonal_history_readout",
     "shuffled_like",
+    "shuffled_orthogonal_control",
 ]
