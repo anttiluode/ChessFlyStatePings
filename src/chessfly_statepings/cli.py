@@ -14,6 +14,7 @@ import torch
 from .arena import play_paired_arena
 from .assets import ensure_artifacts
 from .compare import compare_positions
+from .curvature import evaluate_curvature
 from .encoding import canonical_fen, encode_fen
 from .graph import ChessFlyGraph
 from .listener_replacement import evaluate_listener_replacement
@@ -23,7 +24,9 @@ from .policy import ChessFlyPolicy
 from .query_memory import evaluate_query_memory
 from .receiver_query import evaluate_receiver_query
 from .receipts import build_receipt, write_receipt
+from .rectified_feedback import evaluate_feedback_drift
 from .specificity import evaluate_directional_specificity
+from .state_crossing import evaluate_state_crossing
 from .state_ping import StatePingModel, trajectory_summary
 from .weights import ChessFlyWeights
 
@@ -58,6 +61,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("query-memory", help="ask whether the final state-bearing ping retrieves its own recorded settling history"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0)
     p = sub.add_parser("receiver-query", help="test whether learned receiver geometry makes temporal pings more address-like"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
     p = sub.add_parser("listener-replacement", help="hold the temporal ping fixed while replacing downstream listener geometry"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
+    p = sub.add_parser("curvature", help="measure the even nonlinear response of balanced +/- history pings"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.25, 0.5, 1.0, 2.0, 4.0])
+    p = sub.add_parser("state-crossing", help="cross fixed step-4 history pings over receiver states and predict step-5 readout change"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.5, 1.0, 2.0])
+    p = sub.add_parser("feedback-drift", help="opt-in synthetic adjoint feedback of the even response into later recurrence"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.5, 1.0, 2.0]); p.add_argument("--gammas", type=float, nargs="+", default=[0.0, 0.01, 0.05])
     return parser
 
 
@@ -95,6 +101,14 @@ def _retrieval_payload(metrics: Any) -> dict[str, float]:
         "accuracy": float(metrics.accuracy),
         "mean_reciprocal_rank": float(metrics.mean_reciprocal_rank),
         "mean_correct_margin": float(metrics.mean_correct_margin),
+    }
+
+
+def _details_payload(details: Any) -> dict[str, Any]:
+    return {
+        "scores": [list(row) for row in details.scores],
+        "ranks": list(details.ranks),
+        "margins": list(details.margins),
     }
 
 
@@ -237,25 +251,75 @@ def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] =
             "positions":result.positions,
             "controls":result.controls,
             "raw_history":_retrieval_payload(result.raw_history),
+            "raw_history_details":_details_payload(result.raw_history_details),
             "runs":[
                 {
                     "magnitude":run.magnitude,
                     "association":_retrieval_payload(run.association),
+                    "association_details":_details_payload(run.association_details),
                     "value":{
                         "real":_retrieval_payload(run.value),
                         "control_mean":_retrieval_payload(run.value_control_mean),
                         "percentiles":dict(run.value_percentiles),
+                        "details":_details_payload(run.value_details),
+                        "centered":{
+                            "real":_retrieval_payload(run.value_centered),
+                            "control_mean":_retrieval_payload(run.value_centered_control_mean),
+                            "percentiles":dict(run.value_centered_percentiles),
+                            "details":_details_payload(run.value_centered_details),
+                        },
                     },
                     "policy":{
                         "real":_retrieval_payload(run.policy),
                         "control_mean":_retrieval_payload(run.policy_control_mean),
                         "percentiles":dict(run.policy_percentiles),
+                        "details":_details_payload(run.policy_details),
+                        "centered":{
+                            "real":_retrieval_payload(run.policy_centered),
+                            "control_mean":_retrieval_payload(run.policy_centered_control_mean),
+                            "percentiles":dict(run.policy_centered_percentiles),
+                            "details":_details_payload(run.policy_centered_details),
+                        },
                     },
                 }
                 for run in result.runs
             ],
         }
         receipt=build_receipt(command="listener-replacement",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "curvature":
+        fens=_read_fens(args.positions)
+        result=evaluate_curvature(
+            fens,
+            baseline,
+            rho=args.rho,
+            magnitudes=args.magnitudes,
+        )
+        payload=asdict(result)
+        receipt=build_receipt(command="curvature",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "state-crossing":
+        fens=_read_fens(args.positions)
+        result=evaluate_state_crossing(
+            fens,
+            baseline,
+            rho=args.rho,
+            magnitudes=args.magnitudes,
+            controls=args.controls,
+            seed=args.seed,
+        )
+        payload=asdict(result)
+        receipt=build_receipt(command="state-crossing",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "feedback-drift":
+        fens=_read_fens(args.positions)
+        result=evaluate_feedback_drift(
+            fens,
+            baseline,
+            rho=args.rho,
+            magnitudes=args.magnitudes,
+            gammas=args.gammas,
+            seed=args.seed,
+        )
+        payload=asdict(result)
+        receipt=build_receipt(command="feedback-drift",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
     elif args.command == "arena":
         openings=_read_fens(args.openings) if args.openings else [START_FEN]
         arena=play_paired_arena(ChessFlyPolicy(baseline),ChessFlyPolicy(stateping,forward_kwargs={"rho":args.rho,"kappa":args.kappa}),openings=openings,games=args.games,max_plies=args.max_plies,seed=args.seed)
