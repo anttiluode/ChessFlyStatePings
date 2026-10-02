@@ -2,6 +2,16 @@
 
 This directory keeps small, inspectable receipts from real-artifact runs. The model checkpoint and fly-derived graph stay frozen; receipts record the tested intervention, exact inputs, versions, artifact hashes, and measured outcomes.
 
+## 2026-10-02 — Same present, retained history, fixed delayed ping
+
+The [full analysis](same-present-history-20261002.md) tests 12 cue pairs under four shared present positions. A,B and B,A prefixes lead into identical present inputs; the same causal ping is delivered at step 4 and scored against untouched step 5.
+
+**The targeting gate failed.** Histories and responses remain distinct, but primary policy pairing is 13/24 (54.2%), the matched-control margin percentile is 68.2%, and mean native alignment is negative (-0.01066). Association and value results do not establish targeting either. Correctness is internal next-step alignment, not better chess play.
+
+The original two-step source produced an effectively zero orthogonal ping and an inconclusive first run. A source-only diagnostic found a zero first-step readout, making that residue mathematically parallel to current activity. A separately versioned timing correction was committed before its run; both first receipts are retained.
+
+Full receipt: [`receipts/history-lens-v2-20261002.json`](receipts/history-lens-v2-20261002.json). Compact summary: [`receipts/history-lens-v2-20261002-summary.json`](receipts/history-lens-v2-20261002-summary.json).
+
 ## 2026-10-01 — Gate 1b directional specificity smoke
 
 The three-position CUDA specificity rerun used 32 shuffled, re-orthogonalized, norm-matched controls per position at magnitudes 1, 2, and 4. Only about 3.03% of the residue norm survived orthogonalization against the present state (about 0.0929% squared energy), yet the real temporal direction ranked unusually high for some frozen readers: mean value-logit sensitivity percentile was about 94.4% at magnitudes 1 and 2, association-layer sensitivity about 86.4%, and policy-logit sensitivity about 68.2%.
@@ -85,5 +95,6 @@ The three gates now separate three different propositions:
 - **Gate 1b:** a tiny orthogonal history direction can be unusually readable by some frozen downstream heads.
 - **Gate 2:** that direction is not, by itself, a useful generic cosine retrieval key.
 - **Gate 3:** passing it through the frozen learned receiver does not yet produce successful retrieval, but the value-head geometry makes the real temporal signature markedly more predecessor-specific than matched controls in the three-position smoke test.
+- **Same-present history:** different retained histories make a fixed ping produce different responses, but the response does not pass the declared native-continuation targeting gate on 12 cue pairs across four common positions.
 
-The surviving hypothesis is therefore relational rather than intrinsic: a history-bearing state may become query-like only with respect to a particular learned receiver geometry. Larger held-out position sets are required before treating the Gate 3 percentile pattern as general.
+The receiver-dependent hypothesis remains unproven as a useful continuation mechanism. The same-present assay removes the coarse between-position identity shortcut and separates a history-dependent response from correctly targeted continuation. Broader independent tasks and a beneficial intervention test would be needed for a stronger claim.
