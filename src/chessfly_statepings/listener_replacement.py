@@ -54,7 +54,7 @@ def apply_listener(signatures: torch.Tensor, weight: torch.Tensor) -> torch.Tens
     return signatures @ weight.T
 
 
-def _listener_permutations(width: int, *, controls: int, seed: int = 0) -> tuple[torch.Tensor, ...]:
+def _listener_permutations(width: int, *, controls: int, seed: int) -> tuple[torch.Tensor, ...]:
     if controls < 1:
         raise ValueError("controls must be at least 1")
     if width < 2:
@@ -62,20 +62,17 @@ def _listener_permutations(width: int, *, controls: int, seed: int = 0) -> tuple
     generator = torch.Generator(device="cpu")
     generator.manual_seed(int(seed))
     identity = torch.arange(width, device="cpu")
-    permutations = []
+    result = []
     for _ in range(int(controls)):
         permutation = torch.randperm(width, generator=generator, device="cpu")
         if torch.equal(permutation, identity):
             permutation = permutation.roll(1)
-        permutations.append(permutation)
-    return tuple(permutations)
+        result.append(permutation)
+    return tuple(result)
 
 
 def shuffled_listener_controls(
-    weight: torch.Tensor,
-    *,
-    controls: int,
-    seed: int = 0,
+    weight: torch.Tensor, *, controls: int, seed: int = 0
 ) -> tuple[torch.Tensor, ...]:
     """Column-permute a listener, preserving its singular values exactly."""
     if weight.ndim != 2:
@@ -91,7 +88,6 @@ def listener_retrieval(
     query_signatures: torch.Tensor,
     weight: torch.Tensor,
 ) -> tuple[RetrievalMetrics, RetrievalMetrics]:
-    """Compare raw signature retrieval with retrieval after one listener map."""
     if memory_signatures.shape != query_signatures.shape:
         raise ValueError("memory/query signatures must share shape")
     raw = retrieval_metrics(score_queries(query_signatures, memory_signatures))
@@ -119,14 +115,26 @@ def _percentile(value: float, controls: Sequence[float]) -> float:
 
 
 def _metric_percentiles(
-    real: RetrievalMetrics,
-    controls: Sequence[RetrievalMetrics],
+    real: RetrievalMetrics, controls: Sequence[RetrievalMetrics]
 ) -> dict[str, float]:
     keys = ("accuracy", "mean_reciprocal_rank", "mean_correct_margin")
     return {
         key: _percentile(getattr(real, key), [getattr(item, key) for item in controls])
         for key in keys
     }
+
+
+def _heard_metrics(
+    memory_signatures: torch.Tensor,
+    query_signatures: torch.Tensor,
+    weight: torch.Tensor,
+) -> RetrievalMetrics:
+    return retrieval_metrics(
+        score_queries(
+            apply_listener(query_signatures, weight),
+            apply_listener(memory_signatures, weight),
+        )
+    )
 
 
 def evaluate_listener_signatures(
@@ -143,47 +151,26 @@ def evaluate_listener_signatures(
         raise ValueError("memory/query signatures must share shape")
     if memory_signatures.ndim != 2 or memory_signatures.shape[0] < 2:
         raise ValueError("listener replacement requires at least two records")
+    if value_weight.shape[1] != policy_weight.shape[1]:
+        raise ValueError("value and policy listeners must share an input basis")
 
     association = retrieval_metrics(score_queries(query_signatures, memory_signatures))
-    value = retrieval_metrics(
-        score_queries(
-            apply_listener(query_signatures, value_weight),
-            apply_listener(memory_signatures, value_weight),
-        )
-    )
-    policy = retrieval_metrics(
-        score_queries(
-            apply_listener(query_signatures, policy_weight),
-            apply_listener(memory_signatures, policy_weight),
-        )
-    )
+    value = _heard_metrics(memory_signatures, query_signatures, value_weight)
+    policy = _heard_metrics(memory_signatures, query_signatures, policy_weight)
 
-    value_controls = []
-    for permutation in _listener_permutations(
+    permutations = _listener_permutations(
         value_weight.shape[1], controls=controls, seed=seed
-    ):
-        control = value_weight.index_select(1, permutation.to(value_weight.device))
-        value_controls.append(
-            retrieval_metrics(
-                score_queries(
-                    apply_listener(query_signatures, control),
-                    apply_listener(memory_signatures, control),
-                )
-            )
-        )
-
+    )
+    value_controls = []
     policy_controls = []
-    for permutation in _listener_permutations(
-        policy_weight.shape[1], controls=controls, seed=seed + 1_000_003
-    ):
-        control = policy_weight.index_select(1, permutation.to(policy_weight.device))
+    for permutation in permutations:
+        value_control = value_weight.index_select(1, permutation.to(value_weight.device))
+        policy_control = policy_weight.index_select(1, permutation.to(policy_weight.device))
+        value_controls.append(
+            _heard_metrics(memory_signatures, query_signatures, value_control)
+        )
         policy_controls.append(
-            retrieval_metrics(
-                score_queries(
-                    apply_listener(query_signatures, control),
-                    apply_listener(memory_signatures, control),
-                )
-            )
+            _heard_metrics(memory_signatures, query_signatures, policy_control)
         )
 
     return ListenerSignatureResult(
@@ -206,7 +193,7 @@ def evaluate_listener_replacement(
     controls: int = 32,
     seed: int = 0,
 ) -> ListenerReplacementResult:
-    """Ask whether the same real temporal signature means different things to different frozen heads."""
+    """Ask whether the same real temporal signature changes meaning under listener replacement."""
     fen_list = tuple(fens)
     if len(fen_list) < 2:
         raise ValueError("listener-replacement requires at least two positions")
@@ -254,13 +241,13 @@ def evaluate_listener_replacement(
     policy_weight = model.tensors["policy.weight"]
     runs = []
     for magnitude in magnitude_values:
-        memory_association, _memory_value = receiver_signature(
+        memory_association, _ = receiver_signature(
             model,
             memory_current_tensor,
             memory_history_tensor,
             magnitude=magnitude,
         )
-        query_association, _query_value = receiver_signature(
+        query_association, _ = receiver_signature(
             model,
             query_current_tensor,
             query_history_tensor,
