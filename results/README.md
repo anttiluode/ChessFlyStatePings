@@ -32,12 +32,58 @@ The literal Gate 2 construction **failed**. Adding the real history coordinate m
 
 That is useful narrowing. Gate 1b showed that a tiny orthogonal history direction can be unusually readable by the frozen decoder/value geometry, but Gate 2 shows that this does not automatically make that coordinate a useful cosine address back to its own recorded settling trajectory. "History is readable" and "history is a retrieval key" are different claims.
 
-The negative result is specific to this memory bank, this orthogonal coordinate, equal-weight cosine scoring, rho=0.75, and three smoke positions. It does not test learned attention, a learned associative reader, cross-move biological memory, or consciousness.
-
 Raw receipt: `receipts/query-memory-smoke-20261001.json`
 
 Summary: `receipts/query-memory-smoke-20261001-summary.json`
 
+## 2026-10-02 — Gate 3 receiver-query geometry smoke
+
+Gate 3 tests the narrower hypothesis suggested by Gate 2's failure: perhaps the raw history coordinate is not itself an address, but the **effect it produces inside an already-trained receiver** is more trajectory-specific.
+
+For a readout state `h`, orthogonal history direction `r_perp`, and magnitude `a`, the receiver signature is the sign-symmetric central difference
+
+```text
+g(a) = (A(h + a r_perp) - A(h - a r_perp)) / (2a)
+```
+
+where `A` is ChessFly's frozen learned decoder association map. The same perturbation is also propagated into the frozen value head. Step 4 supplies the memory signature and step 5 the query signature. Thirty-two controls use the same random permutation at both steps before re-orthogonalization and norm matching.
+
+### Absolute retrieval remained negative
+
+| representation | top-1 accuracy | MRR | mean margin |
+| --- | ---: | ---: | ---: |
+| raw history | 0.000 | 0.389 | -0.02204 |
+| present receiver | 0.333 | 0.611 | -0.07089 |
+
+The real receiver signatures also stayed at 0.333 top-1 accuracy for every tested magnitude. Therefore Gate 3 did **not** establish successful history retrieval.
+
+### But the value receiver selectively reshaped the real history direction
+
+| magnitude | value real margin | matched-control mean margin | margin percentile | MRR percentile |
+| ---: | ---: | ---: | ---: | ---: |
+| 1 | -0.00589 | -0.19810 | 86.4% | 90.9% |
+| 2 | -0.00408 | -0.20093 | 86.4% | 87.9% |
+| 4 | -0.00163 | -0.20477 | 86.4% | 89.4% |
+
+This is the main Gate 3 signal. The real value-space history signature remains on the wrong side of zero, but it is far closer to retrieving the correct predecessor than the matched directions are. The effect is stable across all three predeclared magnitudes. Association-space enrichment is weaker: its correct-margin percentile falls from 83.3% at magnitude 1 to 71.2% at 2 and 62.1% at 4.
+
+The current interpretation is therefore deliberately two-part:
+
+1. **No absolute retrieval claim.** Top-1 remains 1/3 and every real margin is negative.
+2. **Suggestive receiver-geometry claim.** The already-trained value receiver maps the real temporal direction into a representation that preserves predecessor identity substantially better than matched shuffled directions on this n=3 smoke test.
+
+That is not learned attention and it is not episodic recall. It says only that the same tiny history-bearing direction can become more identity-preserving after passing through a receiver that was learned for another task.
+
+Raw receipt: `receipts/receiver-query-smoke-20261002.json`
+
+Summary: `receipts/receiver-query-smoke-20261002-summary.json`
+
 ## Current claim boundary
 
-What survives so far is narrower and more interesting than the original literal story: the settling trajectory leaves a small direction that some trained downstream geometry reads unusually strongly, but the first explicit "ping queries recorded history" implementation is falsified by its smoke test. Any stronger query mechanism now needs a reader or geometry that is actually learned for retrieval rather than imposed after the fact.
+The three gates now separate three different propositions:
+
+- **Gate 1b:** a tiny orthogonal history direction can be unusually readable by some frozen downstream heads.
+- **Gate 2:** that direction is not, by itself, a useful generic cosine retrieval key.
+- **Gate 3:** passing it through the frozen learned receiver does not yet produce successful retrieval, but the value-head geometry makes the real temporal signature markedly more predecessor-specific than matched controls in the three-position smoke test.
+
+The surviving hypothesis is therefore relational rather than intrinsic: a history-bearing state may become query-like only with respect to a particular learned receiver geometry. Larger held-out position sets are required before treating the Gate 3 percentile pattern as general.
