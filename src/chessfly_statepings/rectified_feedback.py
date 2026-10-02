@@ -111,8 +111,11 @@ def run_rectified_feedback(
                     instability=f"non-finite activity at step {step + 1}",
                 )
 
-            slow = float(rho) * slow + (1.0 - float(rho)) * hidden
-            residue = hidden - slow
+            # Define this step's ping from the state before feedback. Then, after
+            # any injection, update the carried slow trace from the state that
+            # actually enters the next recurrent step.
+            provisional_slow = float(rho) * slow + (1.0 - float(rho)) * hidden
+            residue = hidden - provisional_slow
             current_readout = hidden.index_select(1, model.readout_index)
             residue_readout = residue.index_select(1, model.readout_index)
             direction, _ratio, _cosine = orthogonal_component(
@@ -145,6 +148,7 @@ def run_rectified_feedback(
                     current_readout + gamma * feedback_readout,
                 )
 
+            slow = float(rho) * slow + (1.0 - float(rho)) * hidden
             feedback_norms.append(
                 float(torch.linalg.vector_norm(feedback_readout).item())
             )
