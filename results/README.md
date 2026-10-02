@@ -1,6 +1,6 @@
 # ChessFlyStatePings results
 
-This directory keeps small, inspectable receipts from real-artifact runs. The model checkpoint and fly-derived graph stay frozen; receipts record the tested intervention, exact inputs, versions, artifact hashes, and measured outcomes.
+This directory preserves real-artifact receipts and compact summaries. The model checkpoint and fly-derived graph stay frozen; receipts record the tested intervention, exact inputs, versions, artifact hashes, and measured outcomes. Start with the summaries and analysis notes; the full history receipts include every response/target matrix and matched control.
 
 ## 2026-10-02 — Same present, retained history, fixed delayed ping
 
@@ -88,13 +88,20 @@ Raw receipt: `receipts/receiver-query-smoke-20261002.json`
 
 Summary: `receipts/receiver-query-smoke-20261002-summary.json`
 
+## Gate 4 and observer-lens diagnostics
+
+The [listener-replacement note](gate4-listener-replacement.md) records the three-position Gate 4 result. Holding the association signature fixed while replacing the value/policy listener changes relative alignment, but learned-head retrieval remains 1/3. This is a listener-geometry comparison, not successful recall.
+
+The `listener-replacement` receipt also reports centered output geometry. `curvature`, `state-crossing` and `feedback-drift` add nonlinear-response, receiver-state and synthetic recurrent-feedback diagnostics. Their implementation and causal boundaries are recorded in the [observer-lens plan](../docs/superpowers/plans/2026-10-02-observer-lens-gates.md); an implemented diagnostic alone is not a positive scientific result.
+
 ## Current claim boundary
 
-The three gates now separate three different propositions:
+The assays separate several different propositions:
 
 - **Gate 1b:** a tiny orthogonal history direction can be unusually readable by some frozen downstream heads.
 - **Gate 2:** that direction is not, by itself, a useful generic cosine retrieval key.
 - **Gate 3:** passing it through the frozen learned receiver does not yet produce successful retrieval, but the value-head geometry makes the real temporal signature markedly more predecessor-specific than matched controls in the three-position smoke test.
+- **Gate 4:** replacing the listener changes relative alignment while absolute retrieval remains unsuccessful.
 - **Same-present history:** different retained histories make a fixed ping produce different responses, but the response does not pass the declared native-continuation targeting gate on 12 cue pairs across four common positions.
 
 The receiver-dependent hypothesis remains unproven as a useful continuation mechanism. The same-present assay removes the coarse between-position identity shortcut and separates a history-dependent response from correctly targeted continuation. Broader independent tasks and a beneficial intervention test would be needed for a stronger claim.

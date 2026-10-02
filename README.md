@@ -8,6 +8,23 @@ This is **not** a claim that ChessFly is a biophysical fly brain or that Drosoph
 
 The latest [same-present history assay](results/same-present-history-20261002.md) holds a delayed ping fixed across opposite cue histories under identical present input. Responses differ with retained history, but the declared continuation-targeting gate fails: policy pairing is 13/24 (54.2%), control percentile 68.2%, and average native alignment is negative. The first, structurally zero-ping attempt is also preserved as inconclusive.
 
+## Experiment map
+
+The completed receiver, listener, observer-lens and same-present assays are available on `main`. Start with the [results index](results/README.md) and compact receipt summaries; the full history receipts preserve every response/target matrix and matched control.
+
+| Command | Question | Recorded outcome or role |
+| --- | --- | --- |
+| `probe` | What does the original model do while settling? | Unmodified reference trajectory |
+| `compare`, `sweep` | Does recurrent fast-minus-slow residue change inference? | Mostly a gain change in the first run; no established chess improvement |
+| `orthogonal`, `specificity` | Is the remaining history direction unusually readable? | Reader-dependent sensitivity in a three-position smoke test |
+| `query-memory` | Does the coordinate retrieve its own predecessor? | Failed: real-history retrieval 1/3, present-only 3/3 |
+| `receiver-query` | Does the learned receiver make a useful address? | Retrieval remains 1/3; relative value-space enrichment |
+| `listener-replacement` | What changes when the listener is replaced? | Reader-dependent relative alignment; no successful retrieval |
+| `curvature`, `state-crossing` | How does a fixed perturbation interact with receiver state? | Nonlinear-response and next-step alignment diagnostics |
+| `feedback-drift` | Does even-response feedback propagate through recurrence? | Opt-in synthetic feedback diagnostic |
+| `history-lens` | Does one shared ping target different retained histories? | Responses differ; the declared targeting gate failed |
+| `arena` | How do baseline and intervention play paired games? | Descriptive play comparison |
+
 ## External artifacts stay external
 
 The repository never commits `flynet.safetensors`, `connectome.bin.gz`, or `neurons.bin.gz`. On first real run they are downloaded directly from the original Hugging Face locations and cached under the platform's user cache directory (`chessfly-statepings/artifacts`). The graph files are checked against decoded hashes published by the ChessFly Space metadata; all files get local SHA-256 records in `manifest.json`.
@@ -218,7 +235,12 @@ This is suggestive receiver-specific enrichment, not successful recall. Associat
 5. `specificity`: compare the real direction with many matched controls using both signs and pre-softmax metrics.
 6. `query-memory`: test the stronger literal claim that the history-bearing ping retrieves its own recorded settling predecessor.
 7. `receiver-query`: ask whether the frozen learned receiver makes the real temporal direction more predecessor-specific than matched directions.
-8. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
+8. `listener-replacement`: keep the association signature fixed while replacing the learned value/policy listener with spectrum-preserving controls; receipts include centered output geometry.
+9. `curvature`: compare the even response of balanced perturbations with analytic nonlinear curvature.
+10. `state-crossing`: cross fixed pings over receiver states and compare with untouched next-step transitions.
+11. `feedback-drift`: test explicitly synthetic, opt-in even-response feedback through later recurrence.
+12. `history-lens`: keep present input and delayed ping fixed across opposite retained cue histories, with independent continuation targets.
+13. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
 
 Stockfish is optional and intended for stricter move-quality checks; the baseline-vs-StatePing comparison and arena do not require it.
 
@@ -243,4 +265,4 @@ set CHESSFLY_RUN_INTEGRATION=1 && python -m pytest tests\test_integration_real.p
 
 ## Scientific boundary
 
-The current evidence separates three claims. Gate 1b suggests that a tiny orthogonal history direction can be unusually readable by some frozen downstream geometry. Gate 2 falsifies the first literal implementation of that direction as an explicit cosine retrieval address. Gate 3 still does not achieve absolute retrieval, but on three smoke positions the frozen value receiver maps the real temporal direction into a representation that is markedly more predecessor-specific than matched shuffled directions. None of these results establishes a biological waveform code, consciousness, learned attention, episodic memory, or that a fly connectome is intrinsically suited to chess. Larger held-out position sets are required before treating the Gate 3 percentile pattern as general.
+The assays separate sensitivity, retrieval and continuation targeting. Gate 1b suggests that a tiny orthogonal history direction can be unusually readable by some frozen downstream geometry. Gate 2 falsifies the first literal implementation of that direction as a cosine retrieval address. Gates 3 and 4 show relative receiver/listener effects on three smoke positions while retrieval remains unsuccessful. The same-present assay retains cue-order differences and history-dependent responses to an identical ping, but fails its declared native-continuation targeting gate. None establishes a biological waveform code, consciousness, useful episodic memory or stronger chess. Broader independent tasks and a beneficial intervention test would be needed for a stronger continuation claim.
