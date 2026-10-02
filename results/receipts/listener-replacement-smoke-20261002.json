@@ -1,0 +1,223 @@
+{
+  "arguments": {
+    "cache_dir": null,
+    "command": "listener-replacement",
+    "controls": 32,
+    "device": "auto",
+    "magnitudes": [
+      1.0,
+      2.0,
+      4.0
+    ],
+    "model_revision": "main",
+    "output": "results\\listener-replacement-smoke.json",
+    "positions": "data/smoke_fens.txt",
+    "rho": 0.75,
+    "seed": 0,
+    "space_revision": "main"
+  },
+  "artifacts": {
+    "acquired_at_utc": "2026-10-01T16:01:45.762787+00:00",
+    "dataset": "FlyWire FAFB v783, Shiu et al. author release",
+    "files": [
+      {
+        "bytes": 47051343,
+        "decoded_sha256": "700a443c885ef2eec25f97136ea14b9a2575fb270321190f4edc4e6f5c49e13d",
+        "expected_decoded_sha256": "700a443c885ef2eec25f97136ea14b9a2575fb270321190f4edc4e6f5c49e13d",
+        "name": "connectome.bin.gz",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "a90aadf847f6939b306b2fe707134dc22213431b6eec3d5a7b4c45d62c98ff8a",
+        "source_url": "https://huggingface.co/spaces/mlabonne/chessfly/resolve/main/data/connectome.bin.gz"
+      },
+      {
+        "bytes": 1442541,
+        "decoded_sha256": "a245f2f2195ff82a4bd1af8dab70e9d213eca29fd5c7add607b3d983ed7bedfa",
+        "expected_decoded_sha256": "a245f2f2195ff82a4bd1af8dab70e9d213eca29fd5c7add607b3d983ed7bedfa",
+        "name": "neurons.bin.gz",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "4d801ed09ee0c4114ca7cae5a18b6ed2decc84dd115c9c30ae8f4a46a4294842",
+        "source_url": "https://huggingface.co/spaces/mlabonne/chessfly/resolve/main/data/neurons.bin.gz"
+      },
+      {
+        "bytes": 99572154,
+        "decoded_sha256": null,
+        "expected_decoded_sha256": null,
+        "name": "flynet.safetensors",
+        "requested_revision": "main",
+        "resolved_revision": null,
+        "sha256": "e05a675c35726b6784c563f6c29ab3fe6afac249e0b143560286a81eab9380d5",
+        "source_url": "https://huggingface.co/mlabonne/chessfly/resolve/main/flynet.safetensors?download=true"
+      }
+    ],
+    "model_revision": "main",
+    "root": "C:\\Users\\antti\\AppData\\Local\\Packages\\PythonSoftwareFoundation.Python.3.13_qbz5n2kfra8p0\\LocalCache\\Local\\chessfly-statepings\\chessfly-statepings\\Cache\\artifacts",
+    "space_revision": "main"
+  },
+  "command": "listener-replacement",
+  "device": "cuda",
+  "git_commit": "70833216b927146bad9700004b6daa09b4527823",
+  "inputs": [
+    "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1",
+    "r1bqkbnr/pppp1ppp/2n5/4p3/4P3/5N2/PPPP1PPP/RNBQKB1R w KQkq - 2 3",
+    "8/8/8/3k4/8/4K3/8/8 w - - 0 1"
+  ],
+  "instability_count": 0,
+  "model": {
+    "alpha": 0.5,
+    "encoder_inputs": 10855,
+    "hidden": 512,
+    "readout_neurons": 41692,
+    "step": 12000,
+    "steps": 5
+  },
+  "results": {
+    "controls": 32,
+    "positions": 3,
+    "raw_history": {
+      "accuracy": 0.0,
+      "mean_correct_margin": -0.022043785080313683,
+      "mean_reciprocal_rank": 0.3888889253139496
+    },
+    "rho": 0.75,
+    "runs": [
+      {
+        "association": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.014079916290938854,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "magnitude": 1.0,
+        "policy": {
+          "control_mean": {
+            "accuracy": 0.39583334513008595,
+            "mean_correct_margin": -0.03371602494735271,
+            "mean_reciprocal_rank": 0.6475694896653295
+          },
+          "percentiles": {
+            "accuracy": 0.4090909090909091,
+            "mean_correct_margin": 0.3484848484848485,
+            "mean_reciprocal_rank": 0.4090909090909091
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.056215398013591766,
+            "mean_reciprocal_rank": 0.6111111640930176
+          }
+        },
+        "value": {
+          "control_mean": {
+            "accuracy": 0.3020833423361182,
+            "mean_correct_margin": -0.0808391611353727,
+            "mean_reciprocal_rank": 0.5989583767950535
+          },
+          "percentiles": {
+            "accuracy": 0.5454545454545454,
+            "mean_correct_margin": 0.6818181818181818,
+            "mean_reciprocal_rank": 0.8333333333333334
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.005888660904020071,
+            "mean_reciprocal_rank": 0.6666666865348816
+          }
+        }
+      },
+      {
+        "association": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.03950200974941254,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "magnitude": 2.0,
+        "policy": {
+          "control_mean": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.051822226771037094,
+            "mean_reciprocal_rank": 0.6059028254821897
+          },
+          "percentiles": {
+            "accuracy": 0.5,
+            "mean_correct_margin": 0.22727272727272727,
+            "mean_reciprocal_rank": 0.5606060606060606
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.08752238750457764,
+            "mean_reciprocal_rank": 0.6111111640930176
+          }
+        },
+        "value": {
+          "control_mean": {
+            "accuracy": 0.3020833423361182,
+            "mean_correct_margin": -0.09608959352772217,
+            "mean_reciprocal_rank": 0.5937500447034836
+          },
+          "percentiles": {
+            "accuracy": 0.5454545454545454,
+            "mean_correct_margin": 0.7727272727272727,
+            "mean_reciprocal_rank": 0.8484848484848485
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.004084150306880474,
+            "mean_reciprocal_rank": 0.6666666865348816
+          }
+        }
+      },
+      {
+        "association": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.05035216361284256,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "magnitude": 4.0,
+        "policy": {
+          "control_mean": {
+            "accuracy": 0.32291667629033327,
+            "mean_correct_margin": -0.06025624148605857,
+            "mean_reciprocal_rank": 0.5972222704440355
+          },
+          "percentiles": {
+            "accuracy": 0.5151515151515151,
+            "mean_correct_margin": 0.16666666666666666,
+            "mean_reciprocal_rank": 0.5757575757575758
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.10599973052740097,
+            "mean_reciprocal_rank": 0.6111111640930176
+          }
+        },
+        "value": {
+          "control_mean": {
+            "accuracy": 0.3020833423361182,
+            "mean_correct_margin": -0.10531945724505931,
+            "mean_reciprocal_rank": 0.5902778198942542
+          },
+          "percentiles": {
+            "accuracy": 0.5454545454545454,
+            "mean_correct_margin": 0.7727272727272727,
+            "mean_reciprocal_rank": 0.8484848484848485
+          },
+          "real": {
+            "accuracy": 0.3333333432674408,
+            "mean_correct_margin": -0.0016326308250427246,
+            "mean_reciprocal_rank": 0.6666666865348816
+          }
+        }
+      }
+    ],
+    "seed": 0
+  },
+  "schema": "chessfly-statepings-receipt-v1",
+  "timestamp_utc": "2026-10-02T05:42:42.113191+00:00",
+  "torch_threads": 6,
+  "versions": {
+    "python": "3.13.14",
+    "python_chess": "1.999",
+    "safetensors": "0.8.0",
+    "torch": "2.7.1+cu118"
+  }
+}

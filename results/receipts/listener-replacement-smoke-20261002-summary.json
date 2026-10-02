@@ -1,0 +1,149 @@
+{
+  "gate": "Gate 4 listener replacement",
+  "timestamp_utc": "2026-10-02T05:42:42.113191+00:00",
+  "git_commit": "70833216b927146bad9700004b6daa09b4527823",
+  "device": "cuda",
+  "positions": 3,
+  "controls": 32,
+  "rho": 0.75,
+  "seed": 0,
+  "raw_history": {
+    "accuracy": 0.0,
+    "mean_correct_margin": -0.022043785080313683,
+    "mean_reciprocal_rank": 0.3888889253139496
+  },
+  "runs": [
+    {
+      "magnitude": 1.0,
+      "association": {
+        "accuracy": 0.3333333432674408,
+        "mean_correct_margin": -0.014079916290938854,
+        "mean_reciprocal_rank": 0.6111111640930176
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.005888660904020071,
+          "mean_reciprocal_rank": 0.6666666865348816
+        },
+        "control_mean": {
+          "accuracy": 0.3020833423361182,
+          "mean_correct_margin": -0.0808391611353727,
+          "mean_reciprocal_rank": 0.5989583767950535
+        },
+        "percentiles": {
+          "accuracy": 0.5454545454545454,
+          "mean_correct_margin": 0.6818181818181818,
+          "mean_reciprocal_rank": 0.8333333333333334
+        }
+      },
+      "policy": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.056215398013591766,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "control_mean": {
+          "accuracy": 0.39583334513008595,
+          "mean_correct_margin": -0.03371602494735271,
+          "mean_reciprocal_rank": 0.6475694896653295
+        },
+        "percentiles": {
+          "accuracy": 0.4090909090909091,
+          "mean_correct_margin": 0.3484848484848485,
+          "mean_reciprocal_rank": 0.4090909090909091
+        }
+      }
+    },
+    {
+      "magnitude": 2.0,
+      "association": {
+        "accuracy": 0.3333333432674408,
+        "mean_correct_margin": -0.03950200974941254,
+        "mean_reciprocal_rank": 0.6111111640930176
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.004084150306880474,
+          "mean_reciprocal_rank": 0.6666666865348816
+        },
+        "control_mean": {
+          "accuracy": 0.3020833423361182,
+          "mean_correct_margin": -0.09608959352772217,
+          "mean_reciprocal_rank": 0.5937500447034836
+        },
+        "percentiles": {
+          "accuracy": 0.5454545454545454,
+          "mean_correct_margin": 0.7727272727272727,
+          "mean_reciprocal_rank": 0.8484848484848485
+        }
+      },
+      "policy": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.08752238750457764,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "control_mean": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.051822226771037094,
+          "mean_reciprocal_rank": 0.6059028254821897
+        },
+        "percentiles": {
+          "accuracy": 0.5,
+          "mean_correct_margin": 0.22727272727272727,
+          "mean_reciprocal_rank": 0.5606060606060606
+        }
+      }
+    },
+    {
+      "magnitude": 4.0,
+      "association": {
+        "accuracy": 0.3333333432674408,
+        "mean_correct_margin": -0.05035216361284256,
+        "mean_reciprocal_rank": 0.6111111640930176
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.0016326308250427246,
+          "mean_reciprocal_rank": 0.6666666865348816
+        },
+        "control_mean": {
+          "accuracy": 0.3020833423361182,
+          "mean_correct_margin": -0.10531945724505931,
+          "mean_reciprocal_rank": 0.5902778198942542
+        },
+        "percentiles": {
+          "accuracy": 0.5454545454545454,
+          "mean_correct_margin": 0.7727272727272727,
+          "mean_reciprocal_rank": 0.8484848484848485
+        }
+      },
+      "policy": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_correct_margin": -0.10599973052740097,
+          "mean_reciprocal_rank": 0.6111111640930176
+        },
+        "control_mean": {
+          "accuracy": 0.32291667629033327,
+          "mean_correct_margin": -0.06025624148605857,
+          "mean_reciprocal_rank": 0.5972222704440355
+        },
+        "percentiles": {
+          "accuracy": 0.5151515151515151,
+          "mean_correct_margin": 0.16666666666666666,
+          "mean_reciprocal_rank": 0.5757575757575758
+        }
+      }
+    }
+  ],
+  "interpretation": {
+    "absolute_retrieval": "negative: real value and policy listeners remain at 1/3 top-1 with negative margins",
+    "value_listener": "suggestive positive alignment: correct-margin percentiles 68.2%, 77.3%, 77.3%; MRR percentiles 83.3%, 84.8%, 84.8%",
+    "policy_listener": "opposite margin pattern: percentiles 34.8%, 22.7%, 16.7%",
+    "boundary": "n=3 smoke set; listener-specific alignment, not successful retrieval or biological memory"
+  }
+}
