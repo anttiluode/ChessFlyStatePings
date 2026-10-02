@@ -49,11 +49,23 @@ def test_listener_replacement_command_writes_listener_receipt(tmp_path, monkeypa
         mean_reciprocal_rank = 0.75
         mean_correct_margin = 0.1
 
+    class Details:
+        scores = ((1.0, 0.2), (0.3, 1.0))
+        ranks = (1.0, 1.0)
+        margins = (0.8, 0.7)
+
     class Run:
         magnitude = 2.0
         association = Metrics()
+        association_details = Details()
         value = Metrics()
         policy = Metrics()
+        value_details = Details()
+        policy_details = Details()
+        value_centered = Metrics()
+        policy_centered = Metrics()
+        value_centered_details = Details()
+        policy_centered_details = Details()
         value_control_mean = Metrics()
         policy_control_mean = Metrics()
         value_percentiles = {
@@ -66,6 +78,18 @@ def test_listener_replacement_command_writes_listener_receipt(tmp_path, monkeypa
             "mean_reciprocal_rank": 0.7,
             "mean_correct_margin": 0.75,
         }
+        value_centered_control_mean = Metrics()
+        policy_centered_control_mean = Metrics()
+        value_centered_percentiles = {
+            "accuracy": 0.9,
+            "mean_reciprocal_rank": 0.95,
+            "mean_correct_margin": 0.97,
+        }
+        policy_centered_percentiles = {
+            "accuracy": 0.55,
+            "mean_reciprocal_rank": 0.65,
+            "mean_correct_margin": 0.7,
+        }
 
     class Result:
         rho = 0.75
@@ -73,6 +97,7 @@ def test_listener_replacement_command_writes_listener_receipt(tmp_path, monkeypa
         positions = 2
         controls = 32
         raw_history = Metrics()
+        raw_history_details = Details()
         runs = (Run(),)
 
     monkeypatch.setattr(cli, "evaluate_listener_replacement", lambda *a, **k: Result())
@@ -112,9 +137,29 @@ def test_listener_replacement_command_writes_listener_receipt(tmp_path, monkeypa
         "positions",
         "controls",
         "raw_history",
+        "raw_history_details",
         "runs",
     }
-    assert payload["runs"][0]["magnitude"] == 2.0
-    assert set(payload["runs"][0]) == {"magnitude", "association", "value", "policy"}
-    assert set(payload["runs"][0]["value"]) == {"real", "control_mean", "percentiles"}
-    assert set(payload["runs"][0]["policy"]) == {"real", "control_mean", "percentiles"}
+    run = payload["runs"][0]
+    assert run["magnitude"] == 2.0
+    assert set(run) == {
+        "magnitude",
+        "association",
+        "association_details",
+        "value",
+        "policy",
+    }
+    assert set(run["value"]) == {
+        "real",
+        "control_mean",
+        "percentiles",
+        "details",
+        "centered",
+    }
+    assert set(run["value"]["centered"]) == {
+        "real",
+        "control_mean",
+        "percentiles",
+        "details",
+    }
+    assert run["value"]["centered"]["details"]["ranks"] == [1.0, 1.0]
