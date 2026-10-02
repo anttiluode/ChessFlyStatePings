@@ -16,6 +16,7 @@ from .assets import ensure_artifacts
 from .compare import compare_positions
 from .encoding import canonical_fen, encode_fen
 from .graph import ChessFlyGraph
+from .listener_replacement import evaluate_listener_replacement
 from .model import ChessFlyBaseline
 from .orthogonal import evaluate_orthogonal_positions
 from .policy import ChessFlyPolicy
@@ -56,6 +57,7 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("specificity", help="rank the real orthogonal history direction against many matched controls"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
     p = sub.add_parser("query-memory", help="ask whether the final state-bearing ping retrieves its own recorded settling history"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0)
     p = sub.add_parser("receiver-query", help="test whether learned receiver geometry makes temporal pings more address-like"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
+    p = sub.add_parser("listener-replacement", help="hold the temporal ping fixed while replacing downstream listener geometry"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[1.0, 2.0, 4.0])
     return parser
 
 
@@ -219,6 +221,41 @@ def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] =
             ],
         }
         receipt=build_receipt(command="receiver-query",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "listener-replacement":
+        fens=_read_fens(args.positions)
+        result=evaluate_listener_replacement(
+            fens,
+            baseline,
+            rho=args.rho,
+            magnitudes=args.magnitudes,
+            controls=args.controls,
+            seed=args.seed,
+        )
+        payload={
+            "rho":result.rho,
+            "seed":result.seed,
+            "positions":result.positions,
+            "controls":result.controls,
+            "raw_history":_retrieval_payload(result.raw_history),
+            "runs":[
+                {
+                    "magnitude":run.magnitude,
+                    "association":_retrieval_payload(run.association),
+                    "value":{
+                        "real":_retrieval_payload(run.value),
+                        "control_mean":_retrieval_payload(run.value_control_mean),
+                        "percentiles":dict(run.value_percentiles),
+                    },
+                    "policy":{
+                        "real":_retrieval_payload(run.policy),
+                        "control_mean":_retrieval_payload(run.policy_control_mean),
+                        "percentiles":dict(run.policy_percentiles),
+                    },
+                }
+                for run in result.runs
+            ],
+        }
+        receipt=build_receipt(command="listener-replacement",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
     elif args.command == "arena":
         openings=_read_fens(args.openings) if args.openings else [START_FEN]
         arena=play_paired_arena(ChessFlyPolicy(baseline),ChessFlyPolicy(stateping,forward_kwargs={"rho":args.rho,"kappa":args.kappa}),openings=openings,games=args.games,max_plies=args.max_plies,seed=args.seed)
