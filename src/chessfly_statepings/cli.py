@@ -17,6 +17,7 @@ from .compare import compare_positions
 from .curvature import evaluate_curvature
 from .encoding import canonical_fen, encode_fen
 from .graph import ChessFlyGraph
+from .history_lens import evaluate_history_lens, load_history_cases
 from .listener_replacement import evaluate_listener_replacement
 from .model import ChessFlyBaseline
 from .orthogonal import evaluate_orthogonal_positions
@@ -64,6 +65,15 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("curvature", help="measure the even nonlinear response of balanced +/- history pings"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.25, 0.5, 1.0, 2.0, 4.0])
     p = sub.add_parser("state-crossing", help="cross fixed step-4 history pings over receiver states and predict step-5 readout change"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--controls", type=int, default=32); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.5, 1.0, 2.0])
     p = sub.add_parser("feedback-drift", help="opt-in synthetic adjoint feedback of the even response into later recurrence"); _common(p); p.add_argument("--positions", required=True); p.add_argument("--rho", type=float, default=0.75); p.add_argument("--seed", type=int, default=0); p.add_argument("--magnitudes", type=float, nargs="+", default=[0.5, 1.0, 2.0]); p.add_argument("--gammas", type=float, nargs="+", default=[0.0, 0.01, 0.05])
+    p = sub.add_parser("history-lens", help="test a fixed delayed ping under ordered histories and identical present input")
+    _common(p)
+    p.add_argument("--cases", required=True)
+    p.add_argument("--rho", type=float, default=0.75)
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--controls", type=int, default=32)
+    p.add_argument("--ping-steps", type=int, choices=[2, 3], default=3)
+    p.add_argument("--delays", type=int, nargs="+", default=[2])
+    p.add_argument("--magnitudes", type=float, nargs="+", default=[0.5, 1.0, 2.0])
     return parser
 
 
@@ -114,6 +124,7 @@ def _details_payload(details: Any) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] = ensure_artifacts, model_loader: Callable[..., Any] = _load_models) -> int:
     args=build_parser().parse_args(argv)
+    history_cases = load_history_cases(args.cases) if args.command == "history-lens" else None
     manifest=_acquire(args, artifact_loader)
     if args.command == "assets":
         print(json.dumps(manifest.to_dict(), indent=2, default=str)); return 0
@@ -320,6 +331,17 @@ def main(argv: list[str] | None = None, *, artifact_loader: Callable[..., Any] =
         )
         payload=asdict(result)
         receipt=build_receipt(command="feedback-drift",arguments=vars(args),device=str(baseline.device),artifact_manifest=manifest,model_metadata=_model_metadata(weights),inputs=fens,results=payload,instability_count=0)
+    elif args.command == "history-lens":
+        payload = evaluate_history_lens(
+            history_cases, baseline, rho=args.rho, seed=args.seed,
+            controls=args.controls, delays=args.delays, magnitudes=args.magnitudes,
+            ping_steps=args.ping_steps,
+        )
+        receipt = build_receipt(
+            command="history-lens", arguments=vars(args), device=str(baseline.device),
+            artifact_manifest=manifest, model_metadata=_model_metadata(weights),
+            inputs=[asdict(case) for case in history_cases], results=payload, instability_count=0,
+        )
     elif args.command == "arena":
         openings=_read_fens(args.openings) if args.openings else [START_FEN]
         arena=play_paired_arena(ChessFlyPolicy(baseline),ChessFlyPolicy(stateping,forward_kwargs={"rho":args.rho,"kappa":args.kappa}),openings=openings,games=args.games,max_plies=args.max_plies,seed=args.seed)

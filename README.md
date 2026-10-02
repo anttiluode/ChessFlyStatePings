@@ -6,6 +6,8 @@ The first StatePing gate tested whether recurrent messages could carry a fast-mi
 
 This is **not** a claim that ChessFly is a biophysical fly brain or that Drosophila spikes use this code. ChessFly's units are artificial recurrent units wired by a fly-derived graph.
 
+The latest [same-present history assay](results/same-present-history-20261002.md) holds a delayed ping fixed across opposite cue histories under identical present input. Responses differ with retained history, but the declared continuation-targeting gate fails: policy pairing is 13/24 (54.2%), control percentile 68.2%, and average native alignment is negative. The first, structurally zero-ping attempt is also preserved as inconclusive.
+
 ## External artifacts stay external
 
 The repository never commits `flynet.safetensors`, `connectome.bin.gz`, or `neurons.bin.gz`. On first real run they are downloaded directly from the original Hugging Face locations and cached under the platform's user cache directory (`chessfly-statepings/artifacts`). The graph files are checked against decoded hashes published by the ChessFly Space metadata; all files get local SHA-256 records in `manifest.json`.
@@ -81,6 +83,24 @@ chessfly-statepings arena --games 20 --rho 0.75 --kappa 0.10
 Every nontrivial experiment writes a small JSON receipt containing configuration, versions, upstream artifact hashes/revisions, inputs, model metadata, results, and instability counts. Use `--output path.json` to choose its location.
 
 Real-run receipts and the current interpretation are kept under [`results/`](results/README.md).
+
+## Same present, retained history, fixed delayed ping
+
+This assay asks: **With the same present input, do different retained histories make the same delayed ping produce different, correctly targeted continuations?**
+
+```bash
+chessfly-statepings history-lens --cases data/history_lens_cases.json --rho 0.75 --seed 0 --controls 32 --ping-steps 3 --delays 2 --magnitudes 0.5 1 2
+```
+
+Each of 12 declared cases presents the same two cue snapshots in opposite orders, A,B and B,A. Both receivers then receive the identical present snapshot. These are controlled inputs inside one five-step settle, not legal chess trajectories or memory carried between moves. The shared ping comes from a separate present-only trajectory's first three steps, arrives at step 4, and is held fixed across both histories and magnitudes. Step 5 remains the held-out target.
+
+The balanced decoder response is scored against each receiver's **next unmodified settling transition**, held out from ping construction. The primary measurement uses centered legal-policy logits at delay 2 (two common-present steps) and magnitude 1; association and value results and the other magnitudes are secondary. Receipts preserve the full two-by-two matrices, target/response separation, erased-history and swapped-pair controls, a state-blind linear reader, and 32 norm-matched shuffled pings. Ties get half credit; zero or indistinguishable directions are explicitly inconclusive.
+
+The gate requires at least 12 identifiable cases, 75% pairing accuracy, positive native alignment and margin, improvement over erased history, and a margin percentile of at least 95% against matched controls. The [design](docs/superpowers/specs/2026-10-02-same-present-history-design.md) records the original protocol and a timing amendment committed before the version 2 run. Correctness here means internal next-step targeting; it does not establish chess improvement or that injecting a ping changes the eventual continuation beneficially.
+
+Version 1 used a two-step prefix and was inconclusive because the orthogonal source ping vanishes mathematically when the first readout is zero. Its first receipt and source-only diagnostic are preserved. Reproduce it with `--ping-steps 2 --delays 1 2`. Version 2 waits for the third reference step and delivers the query one step later. The frozen five-step model leaves only delay 2 available for that causal query and its independent target.
+
+The motivating preprint, Martin-Burgos et al., [*Action potential waveforms are state-dependent*](https://doi.org/10.64898/2026.09.15.751814), studies waveform dependence on neuronal/network state. This artificial receiver assay tests a further question: whether a shared perturbation reads retained history in a continuation-specific way. It does not reproduce the paper's physiology.
 
 ## Gate 0: recurrent fast-minus-slow StatePing
 

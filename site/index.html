@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="ChessFlyStatePings: directional history readout, explicit query-memory, and learned receiver-geometry results on frozen ChessFly.">
-  <title>ChessFlyStatePings — Gate 1b + Gate 2 + Gate 3</title>
+  <meta name="description" content="Frozen ChessFly: opposite retained histories, identical present input and a fixed delayed ping. Responses differ, but continuation targeting fails the declared gate.">
+  <title>ChessFlyStatePings — Same present, retained history</title>
   <style>
     :root{color-scheme:dark;--bg:#080b10;--panel:#111821;--ink:#edf6ff;--muted:#91a4b7;--line:#263446;--accent:#68e0cf;--accent2:#84a9ff;--good:#a7f3d0;--warn:#ffd27a}
     *{box-sizing:border-box}html{scroll-behavior:smooth}
@@ -17,14 +17,57 @@
     table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{padding:10px 9px;border-bottom:1px solid var(--line);text-align:right}th:first-child,td:first-child{text-align:left}th{color:#aec0d1;font-weight:600}
     .callout{border-left:3px solid var(--accent);padding:4px 0 4px 18px;margin:24px 0}.negative{border-color:var(--warn)}.equation{font-size:1.05rem;color:#eaf8ff;background:#0a1017;border:1px solid var(--line);border-radius:10px;padding:14px 16px;overflow:auto}
     footer{margin-top:52px;padding-top:22px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}@media(max-width:820px){.metric,.half{grid-column:span 12}table{font-size:.78rem}}
+    a{color:var(--accent2)}.failed{color:var(--warn)}.table-wrap{overflow-x:auto}
   </style>
 </head>
 <body>
 <main class="wrap">
-  <div class="eyebrow">ChessFlyStatePings / Gates 1b–3 / CUDA smoke results</div>
-  <h1>History is not the key. The <em>receiver</em> may shape the key.</h1>
-  <p class="lead">Three gates now separate three claims: a tiny history direction can be unusually readable, raw cosine lookup can still fail, and a learned downstream receiver can nevertheless make the real temporal direction much more predecessor-specific than matched directions.</p>
-  <span class="pill">3 smoke positions</span><span class="pill">32 matched controls</span><span class="pill">magnitudes 1, 2, 4</span><span class="pill">CUDA</span><span class="pill">0 instabilities</span>
+  <div class="eyebrow">ChessFlyStatePings / same-present history assay / 2026-10-02</div>
+  <h1>A fixed ping through <em>retained history.</em></h1>
+  <p class="lead">With the same present input, do different retained histories make the same delayed ping produce different, correctly targeted continuations?</p>
+  <p>Responses differ with history. The declared continuation-targeting gate fails: policy pairing is close to chance, and average alignment with the intended next step is negative.</p>
+  <span class="pill">12 cue pairs / 4 common positions</span><span class="pill">32 matched controls</span><span class="pill">magnitudes 0.5, 1, 2</span><span class="pill">CPU</span><span class="pill">0 instabilities</span>
+
+  <section class="grid" aria-label="Same-present history results">
+    <div class="card metric"><div class="label">Identifiable pairs</div><div class="big">12 / 12</div><div class="note">24 correlated queries</div></div>
+    <div class="card metric"><div class="label">Policy pairing</div><div class="big">54.2%</div><div class="note">13 / 24; required 75%</div></div>
+    <div class="card metric"><div class="label">Control percentile</div><div class="big">68.2%</div><div class="note">required 95%</div></div>
+    <div class="card metric"><div class="label">Declared gate</div><div class="big failed">Failed</div><div class="note">delay 2, magnitude 1</div></div>
+
+    <div class="card wide">
+      <h2>Different responses are measurable. Targeting remains unproven.</h2>
+      <p>Two receivers get the same cue bag in opposite order: A,B and B,A. Both then receive the identical present input. A present-only reference forms one shared ping at step 3; delivery is at step 4, and each receiver's untouched step 5 supplies its own target.</p>
+      <div class="equation">gᵢ(a) = [D(hᵢ + a p) − D(hᵢ − a p)] / (2a)</div>
+      <p>Each response is scored against both next-step target directions. The policy measurement uses centered logits over the common present's legal moves.</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>primary measure</th><th>observed</th><th>required</th></tr></thead>
+          <tbody>
+            <tr><td>native pairing accuracy</td><td>54.17%</td><td>≥ 75%</td></tr>
+            <tr><td>native minus crossed cosine</td><td>+0.00009613</td><td>&gt; 0.000001</td></tr>
+            <tr><td>native continuation cosine</td><td>−0.010663</td><td>&gt; 0</td></tr>
+            <tr><td>improvement over erased history</td><td>+0.00009613</td><td>&gt; 0.000001</td></tr>
+            <tr><td>matched-control percentile</td><td>68.18%</td><td>≥ 95%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Erased-history and state-blind linear-reader margins are effectively zero; swapping the retained responses reverses the real margin. Mean relative policy-response separation is 0.233. The other magnitudes also stay at 54.17% pairing accuracy with negative native alignment.</p>
+      <div class="callout negative"><h3>Internal next-step targeting</h3><p>The probe reads a frozen receiver. It does not feed its response back into recurrence or test better chess play. Twelve cue pairs share four common positions; these are descriptive measurements.</p></div>
+    </div>
+
+    <div class="card half">
+      <h2>The first attempt is preserved</h2>
+      <p>Version 1 formed the ping after two steps and was inconclusive. The step-1 readout was zero, making the two-step residue parallel to current activity. Orthogonalization removed it, leaving only rounding residue.</p>
+      <p>Version 2 was declared before its run: wait for the first noncollinear prefix at step 3, deliver at step 4, and hold out step 5. Cases, controls and thresholds stayed fixed.</p>
+    </div>
+    <div class="card half">
+      <h2>Receipts and source</h2>
+      <p><a href="https://github.com/anttiluode/ChessFlyStatePings/blob/feature/same-present-history/results/same-present-history-20261002.md">Full analysis, reproduction command and both first receipts</a></p>
+      <p>Inspired by Martin-Burgos et al., <a href="https://doi.org/10.64898/2026.09.15.751814">Action potential waveforms are state-dependent</a>, a bioRxiv preprint. This assay tests receiver-side meaning in an artificial model; it does not reproduce neuronal waveforms.</p>
+    </div>
+  </section>
+
+  <h2>Earlier gates: three-position CUDA smoke tests</h2>
 
   <section class="grid">
     <div class="card metric"><div class="label">Gate 1b value sensitivity</div><div class="big">94.4%</div><div class="note">matched-control percentile</div></div>
@@ -76,15 +119,16 @@
       <p><b>Gate 1b:</b> the orthogonal history direction is unusually readable by some frozen heads.</p>
       <p><b>Gate 2:</b> the raw direction is not a useful generic cosine key to its own predecessor.</p>
       <p><b>Gate 3:</b> the learned receiver still does not create successful recall, but the value geometry makes the real temporal signature much more predecessor-specific than matched directions.</p>
-      <div class="callout"><h3>Current reading</h3><p>The surviving hypothesis is relational: a history-bearing state may become query-like only with respect to a particular learned receiver geometry. This n=3 result is suggestive, not general. Larger held-out position sets are the next required falsifier.</p></div>
+      <div class="callout"><h3>Reading at Gate 3</h3><p>The hypothesis was relational: a history-bearing state may become query-like with respect to a learned receiver geometry. That n=3 result was suggestive. The later same-present assay above finds history-dependent responses but fails its native-continuation targeting gate.</p></div>
     </div>
   </section>
 
   <footer>
+    <div>Same-present v2 run: <code>e269343c14b0572ecfb868335ca23e6727d598a3</code> · CPU · 2026-10-02 · rho 0.75 · seed 0</div>
     <div>Gate 1b run: <code>172ef6e06eb9a92bec104dbe6067b90596e8b5c7</code> · 2026-10-01</div>
     <div>Gate 2 run: <code>94e5c8d67dd03631662627e78d5c73a3b1499404</code> · 2026-10-01</div>
     <div>Gate 3 run: <code>7e31772e6e0e042b030874d8e2a9da8ac1c6c132</code> · 2026-10-02 · rho 0.75 · seed 0</div>
-    <div>All results are preliminary n=3 smoke measurements. No claim of biological memory, attention, consciousness, or chess-strength improvement.</div>
+    <div>The latest assay uses 12 cue pairs across four common positions; earlier gates use n=3 smoke measurements. No claim of biological memory, attention, consciousness, or chess-strength improvement.</div>
   </footer>
 </main>
 </body>
