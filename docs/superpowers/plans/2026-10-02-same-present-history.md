@@ -58,4 +58,6 @@
 - [x] Register `history-lens --cases ... --delays ... --magnitudes ... --controls ... --seed ... --rho ...` and write the existing receipt schema.
 - [x] Run the full repository suite, compile checks and diff checks.
 - [x] Run the real-artifact assay if available; preserve the first receipt and document the result without tuning.
-- [ ] Request an independent whole-change review, resolve findings, push the branch and open a stacked PR against `feature/observer-lens-gates`.
+- [x] Request an independent whole-change review, resolve findings, push the branch and open a stacked PR against `feature/observer-lens-gates`.
+
+Published as https://github.com/anttiluode/ChessFlyStatePings/pull/9, stacked on PR 8. The targeting gate failed; all 116 tests passed, including real-artifact integration. Independent review reproduced both runs without blocking findings. Exact measured commits are preserved in the verified provenance bundle.
