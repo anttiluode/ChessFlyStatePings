@@ -10,29 +10,52 @@ from .encoding import canonical_fen, encode_fen
 from .orthogonal import orthogonal_history_readout
 from .query_memory import RetrievalMetrics, retrieval_metrics, score_queries
 from .receiver_query import receiver_signature
+from .retrieval_diagnostics import RetrievalDetails, center_rows, retrieval_details
 
 
 @dataclass(frozen=True, slots=True)
 class ListenerSignatureResult:
     association: RetrievalMetrics
+    association_details: RetrievalDetails
     value: RetrievalMetrics
     policy: RetrievalMetrics
+    value_details: RetrievalDetails
+    policy_details: RetrievalDetails
+    value_centered: RetrievalMetrics
+    policy_centered: RetrievalMetrics
+    value_centered_details: RetrievalDetails
+    policy_centered_details: RetrievalDetails
     value_control_mean: RetrievalMetrics
     policy_control_mean: RetrievalMetrics
     value_percentiles: Mapping[str, float]
     policy_percentiles: Mapping[str, float]
+    value_centered_control_mean: RetrievalMetrics
+    policy_centered_control_mean: RetrievalMetrics
+    value_centered_percentiles: Mapping[str, float]
+    policy_centered_percentiles: Mapping[str, float]
 
 
 @dataclass(frozen=True, slots=True)
 class ListenerReplacementRun:
     magnitude: float
     association: RetrievalMetrics
+    association_details: RetrievalDetails
     value: RetrievalMetrics
     policy: RetrievalMetrics
+    value_details: RetrievalDetails
+    policy_details: RetrievalDetails
+    value_centered: RetrievalMetrics
+    policy_centered: RetrievalMetrics
+    value_centered_details: RetrievalDetails
+    policy_centered_details: RetrievalDetails
     value_control_mean: RetrievalMetrics
     policy_control_mean: RetrievalMetrics
     value_percentiles: Mapping[str, float]
     policy_percentiles: Mapping[str, float]
+    value_centered_control_mean: RetrievalMetrics
+    policy_centered_control_mean: RetrievalMetrics
+    value_centered_percentiles: Mapping[str, float]
+    policy_centered_percentiles: Mapping[str, float]
 
 
 @dataclass(frozen=True, slots=True)
@@ -42,6 +65,7 @@ class ListenerReplacementResult:
     controls: int
     seed: int
     raw_history: RetrievalMetrics
+    raw_history_details: RetrievalDetails
     runs: tuple[ListenerReplacementRun, ...]
 
 
@@ -83,6 +107,21 @@ def shuffled_listener_controls(
     )
 
 
+def _heard_scores(
+    memory_signatures: torch.Tensor,
+    query_signatures: torch.Tensor,
+    weight: torch.Tensor,
+    *,
+    centered: bool,
+) -> torch.Tensor:
+    memory = apply_listener(memory_signatures, weight)
+    query = apply_listener(query_signatures, weight)
+    if centered:
+        memory = center_rows(memory)
+        query = center_rows(query)
+    return score_queries(query, memory)
+
+
 def listener_retrieval(
     memory_signatures: torch.Tensor,
     query_signatures: torch.Tensor,
@@ -92,10 +131,7 @@ def listener_retrieval(
         raise ValueError("memory/query signatures must share shape")
     raw = retrieval_metrics(score_queries(query_signatures, memory_signatures))
     heard = retrieval_metrics(
-        score_queries(
-            apply_listener(query_signatures, weight),
-            apply_listener(memory_signatures, weight),
-        )
+        _heard_scores(memory_signatures, query_signatures, weight, centered=False)
     )
     return raw, heard
 
@@ -128,11 +164,15 @@ def _heard_metrics(
     memory_signatures: torch.Tensor,
     query_signatures: torch.Tensor,
     weight: torch.Tensor,
+    *,
+    centered: bool,
 ) -> RetrievalMetrics:
     return retrieval_metrics(
-        score_queries(
-            apply_listener(query_signatures, weight),
-            apply_listener(memory_signatures, weight),
+        _heard_scores(
+            memory_signatures,
+            query_signatures,
+            weight,
+            centered=centered,
         )
     )
 
@@ -154,33 +194,92 @@ def evaluate_listener_signatures(
     if value_weight.shape[1] != policy_weight.shape[1]:
         raise ValueError("value and policy listeners must share an input basis")
 
-    association = retrieval_metrics(score_queries(query_signatures, memory_signatures))
-    value = _heard_metrics(memory_signatures, query_signatures, value_weight)
-    policy = _heard_metrics(memory_signatures, query_signatures, policy_weight)
+    association_scores = score_queries(query_signatures, memory_signatures)
+    value_scores = _heard_scores(
+        memory_signatures, query_signatures, value_weight, centered=False
+    )
+    policy_scores = _heard_scores(
+        memory_signatures, query_signatures, policy_weight, centered=False
+    )
+    value_centered_scores = _heard_scores(
+        memory_signatures, query_signatures, value_weight, centered=True
+    )
+    policy_centered_scores = _heard_scores(
+        memory_signatures, query_signatures, policy_weight, centered=True
+    )
+
+    association = retrieval_metrics(association_scores)
+    value = retrieval_metrics(value_scores)
+    policy = retrieval_metrics(policy_scores)
+    value_centered = retrieval_metrics(value_centered_scores)
+    policy_centered = retrieval_metrics(policy_centered_scores)
 
     permutations = _listener_permutations(
         value_weight.shape[1], controls=controls, seed=seed
     )
     value_controls = []
     policy_controls = []
+    value_centered_controls = []
+    policy_centered_controls = []
     for permutation in permutations:
         value_control = value_weight.index_select(1, permutation.to(value_weight.device))
         policy_control = policy_weight.index_select(1, permutation.to(policy_weight.device))
         value_controls.append(
-            _heard_metrics(memory_signatures, query_signatures, value_control)
+            _heard_metrics(
+                memory_signatures,
+                query_signatures,
+                value_control,
+                centered=False,
+            )
         )
         policy_controls.append(
-            _heard_metrics(memory_signatures, query_signatures, policy_control)
+            _heard_metrics(
+                memory_signatures,
+                query_signatures,
+                policy_control,
+                centered=False,
+            )
+        )
+        value_centered_controls.append(
+            _heard_metrics(
+                memory_signatures,
+                query_signatures,
+                value_control,
+                centered=True,
+            )
+        )
+        policy_centered_controls.append(
+            _heard_metrics(
+                memory_signatures,
+                query_signatures,
+                policy_control,
+                centered=True,
+            )
         )
 
     return ListenerSignatureResult(
         association=association,
+        association_details=retrieval_details(association_scores),
         value=value,
         policy=policy,
+        value_details=retrieval_details(value_scores),
+        policy_details=retrieval_details(policy_scores),
+        value_centered=value_centered,
+        policy_centered=policy_centered,
+        value_centered_details=retrieval_details(value_centered_scores),
+        policy_centered_details=retrieval_details(policy_centered_scores),
         value_control_mean=_mean_metrics(value_controls),
         policy_control_mean=_mean_metrics(policy_controls),
         value_percentiles=_metric_percentiles(value, value_controls),
         policy_percentiles=_metric_percentiles(policy, policy_controls),
+        value_centered_control_mean=_mean_metrics(value_centered_controls),
+        policy_centered_control_mean=_mean_metrics(policy_centered_controls),
+        value_centered_percentiles=_metric_percentiles(
+            value_centered, value_centered_controls
+        ),
+        policy_centered_percentiles=_metric_percentiles(
+            policy_centered, policy_centered_controls
+        ),
     )
 
 
@@ -233,9 +332,8 @@ def evaluate_listener_replacement(
     memory_history_tensor = torch.cat(memory_history, dim=0)
     query_current_tensor = torch.cat(query_current, dim=0)
     query_history_tensor = torch.cat(query_history, dim=0)
-    raw_history = retrieval_metrics(
-        score_queries(query_history_tensor, memory_history_tensor)
-    )
+    raw_history_scores = score_queries(query_history_tensor, memory_history_tensor)
+    raw_history = retrieval_metrics(raw_history_scores)
 
     value_weight = model.tensors["value.weight"]
     policy_weight = model.tensors["policy.weight"]
@@ -265,12 +363,23 @@ def evaluate_listener_replacement(
             ListenerReplacementRun(
                 magnitude=magnitude,
                 association=signature_result.association,
+                association_details=signature_result.association_details,
                 value=signature_result.value,
                 policy=signature_result.policy,
+                value_details=signature_result.value_details,
+                policy_details=signature_result.policy_details,
+                value_centered=signature_result.value_centered,
+                policy_centered=signature_result.policy_centered,
+                value_centered_details=signature_result.value_centered_details,
+                policy_centered_details=signature_result.policy_centered_details,
                 value_control_mean=signature_result.value_control_mean,
                 policy_control_mean=signature_result.policy_control_mean,
                 value_percentiles=signature_result.value_percentiles,
                 policy_percentiles=signature_result.policy_percentiles,
+                value_centered_control_mean=signature_result.value_centered_control_mean,
+                policy_centered_control_mean=signature_result.policy_centered_control_mean,
+                value_centered_percentiles=signature_result.value_centered_percentiles,
+                policy_centered_percentiles=signature_result.policy_centered_percentiles,
             )
         )
 
@@ -280,6 +389,7 @@ def evaluate_listener_replacement(
         controls=int(controls),
         seed=int(seed),
         raw_history=raw_history,
+        raw_history_details=retrieval_details(raw_history_scores),
         runs=tuple(runs),
     )
 
