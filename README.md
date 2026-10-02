@@ -2,7 +2,7 @@
 
 `ChessFlyStatePings` is an experimental research harness around Maxime Labonne's published **ChessFly** model. It asks narrow questions inspired by `BrainAsInverseModelerV3` while keeping the trained checkpoint and fly-derived graph fixed.
 
-The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gates explicitly remove that present-state direction and ask whether the surviving trajectory direction is unusually readable. Gate 1b found suggestive reader-specific sensitivity in a three-position smoke test; Gate 2 then made the stronger "ping as query" metaphor literal and failed its first retrieval smoke test.
+The first StatePing gate tested whether recurrent messages could carry a fast-minus-slow component of each artificial unit's recent settling trajectory. The first real-artifact run showed that this residue was almost perfectly collinear with current activity, so the next gates explicitly remove that present-state direction and ask whether the surviving trajectory direction is unusually readable. Gate 1b found suggestive reader-specific sensitivity in a three-position smoke test; Gate 2 made the stronger "ping as query" metaphor literal and failed; Gate 3 then asked whether the **learned receiver geometry**, rather than the raw history vector, makes that temporal direction more address-like.
 
 This is **not** a claim that ChessFly is a biophysical fly brain or that Drosophila spikes use this code. ChessFly's units are artificial recurrent units wired by a fly-derived graph.
 
@@ -64,6 +64,12 @@ Run the explicit history-query retrieval gate:
 
 ```bash
 chessfly-statepings query-memory --positions data/smoke_fens.txt --rho 0.75 --seed 0
+```
+
+Run the learned receiver-geometry query gate:
+
+```bash
+chessfly-statepings receiver-query --positions data/smoke_fens.txt --rho 0.75 --seed 0 --controls 32 --magnitudes 1 2 4
 ```
 
 Run paired-color headless games using one raw network forward per move:
@@ -163,7 +169,25 @@ The score is an equal-weight average of cosine similarities for present and hist
 
 The first three-position CUDA smoke test is a **negative result for this literal construction**. Present-only retrieval scored 1.0 top-1 accuracy and 1.0 MRR with a positive mean margin of +0.00676. Adding the real history coordinate reduced accuracy to about 0.333 and MRR to about 0.611, with a negative mean margin of -0.00612. The shuffled-history control remained at 1.0 accuracy/MRR with a +0.00539 margin.
 
-So the tested orthogonal history coordinate is not, by itself, a useful equal-weight cosine key to its own penultimate settling state. This narrows the interpretation of Gate 1b: **history being unusually readable by a trained downstream geometry is not the same claim as history being an explicit retrieval address under an imposed metric.** A different learned reader or memory geometry would be a different hypothesis and needs a different gate.
+So the tested orthogonal history coordinate is not, by itself, a useful equal-weight cosine key to its own penultimate settling state. This narrows the interpretation of Gate 1b: **history being unusually readable by a trained downstream geometry is not the same claim as history being an explicit retrieval address under an imposed metric.**
+
+## Gate 3: receiver-query geometry
+
+Gate 3 tests the next narrower possibility: the raw history vector may not be an address, but its **effect through an already-trained receiver** may preserve trajectory identity.
+
+For a readout state `h`, history direction `r_perp`, magnitude `a`, and frozen decoder association map `A`, define
+
+```text
+g(a) = (A(h + a r_perp) - A(h - a r_perp)) / (2a)
+```
+
+This is a sign-symmetric central-difference approximation to the local receiver response along the history direction. The same construction is propagated through the frozen value head. Step 4 produces memory signatures; step 5 produces query signatures. Thirty-two matched controls use the same shuffled feature permutation at both steps, followed by re-orthogonalization and norm matching.
+
+The first three-position CUDA smoke run remains **negative for absolute retrieval**: raw history retrieves 0/3 positions, the present association receiver retrieves 1/3, and the real receiver signatures also retrieve only 1/3 at all magnitudes. All real correct-vs-best-distractor margins remain below zero.
+
+However, the learned **value-head geometry** makes the real temporal signature substantially more predecessor-specific than matched directions. At magnitudes 1, 2, and 4, the real value-space margin percentiles are 86.4% at all three settings and the MRR percentiles are 90.9%, 87.9%, and 89.4%. The real value margins approach zero (-0.00589, -0.00408, -0.00163) while matched-control means remain near -0.20.
+
+This is suggestive receiver-specific enrichment, not successful recall. Association-space enrichment is weaker and declines with magnitude. The smoke result therefore supports a relational hypothesis—history may become more query-like **with respect to a particular learned receiver geometry**—while explicitly stopping short of claiming that Gate 3 has produced a working memory address.
 
 ## Measurement order
 
@@ -173,7 +197,8 @@ So the tested orthogonal history coordinate is not, by itself, a useful equal-we
 4. `orthogonal`: remove the present-state direction and compare one real trajectory direction against one matched control.
 5. `specificity`: compare the real direction with many matched controls using both signs and pre-softmax metrics.
 6. `query-memory`: test the stronger literal claim that the history-bearing ping retrieves its own recorded settling predecessor.
-7. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
+7. `receiver-query`: ask whether the frozen learned receiver makes the real temporal direction more predecessor-specific than matched directions.
+8. `arena`: descriptive paired-color games. Match wins alone are not an Elo estimate or an improvement claim.
 
 Stockfish is optional and intended for stricter move-quality checks; the baseline-vs-StatePing comparison and arena do not require it.
 
@@ -198,4 +223,4 @@ set CHESSFLY_RUN_INTEGRATION=1 && python -m pytest tests\test_integration_real.p
 
 ## Scientific boundary
 
-The current evidence separates two claims. Gate 1b suggests that a tiny orthogonal history direction can be unusually readable by some frozen downstream geometry. Gate 2 falsifies the first literal implementation of that direction as an explicit cosine retrieval address. Neither result establishes a biological waveform code, consciousness, learned attention, or that a fly connectome is intrinsically suited to chess. Negative results remain first-class evidence for the tested coordinate and reader.
+The current evidence separates three claims. Gate 1b suggests that a tiny orthogonal history direction can be unusually readable by some frozen downstream geometry. Gate 2 falsifies the first literal implementation of that direction as an explicit cosine retrieval address. Gate 3 still does not achieve absolute retrieval, but on three smoke positions the frozen value receiver maps the real temporal direction into a representation that is markedly more predecessor-specific than matched shuffled directions. None of these results establishes a biological waveform code, consciousness, learned attention, episodic memory, or that a fly connectome is intrinsically suited to chess. Larger held-out position sets are required before treating the Gate 3 percentile pattern as general.

@@ -1,0 +1,142 @@
+{
+  "source_run": {
+    "timestamp_utc": "2026-10-02T04:54:09.737161+00:00",
+    "git_commit": "7e31772e6e0e042b030874d8e2a9da8ac1c6c132",
+    "device": "cuda",
+    "positions": 3,
+    "controls": 32,
+    "rho": 0.75,
+    "seed": 0,
+    "instability_count": 0
+  },
+  "reference": {
+    "raw_history": {
+      "accuracy": 0.0,
+      "mean_correct_margin": -0.02204057388007641,
+      "mean_reciprocal_rank": 0.3888889253139496
+    },
+    "present_receiver": {
+      "accuracy": 0.3333333432674408,
+      "mean_correct_margin": -0.07089287042617798,
+      "mean_reciprocal_rank": 0.6111111640930176
+    }
+  },
+  "runs": [
+    {
+      "magnitude": 1.0,
+      "association": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6111111640930176,
+          "mean_correct_margin": -0.014083726331591606
+        },
+        "control_mean": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6059028198942542,
+          "mean_correct_margin": -0.06762783281010343
+        },
+        "percentiles": {
+          "accuracy": 0.5,
+          "mean_reciprocal_rank": 0.5,
+          "mean_correct_margin": 0.8333333333333334
+        }
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6666666865348816,
+          "mean_correct_margin": -0.005889098159968853
+        },
+        "control_mean": {
+          "accuracy": 0.31250000931322575,
+          "mean_reciprocal_rank": 0.6006944924592972,
+          "mean_correct_margin": -0.19810044727637433
+        },
+        "percentiles": {
+          "accuracy": 0.5303030303030303,
+          "mean_reciprocal_rank": 0.9090909090909091,
+          "mean_correct_margin": 0.8636363636363636
+        },
+        "margin_improvement_vs_control_mean": 0.19221134911640547
+      }
+    },
+    {
+      "magnitude": 2.0,
+      "association": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6111111640930176,
+          "mean_correct_margin": -0.03950320929288864
+        },
+        "control_mean": {
+          "accuracy": 0.3437500102445483,
+          "mean_reciprocal_rank": 0.6111111547797918,
+          "mean_correct_margin": -0.07150798544898862
+        },
+        "percentiles": {
+          "accuracy": 0.48484848484848486,
+          "mean_reciprocal_rank": 0.5151515151515151,
+          "mean_correct_margin": 0.7121212121212122
+        }
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6666666865348816,
+          "mean_correct_margin": -0.004083077423274517
+        },
+        "control_mean": {
+          "accuracy": 0.31250000931322575,
+          "mean_reciprocal_rank": 0.6041667126119137,
+          "mean_correct_margin": -0.20093084365362301
+        },
+        "percentiles": {
+          "accuracy": 0.5303030303030303,
+          "mean_reciprocal_rank": 0.8787878787878788,
+          "mean_correct_margin": 0.8636363636363636
+        },
+        "margin_improvement_vs_control_mean": 0.1968477662303485
+      }
+    },
+    {
+      "magnitude": 4.0,
+      "association": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6111111640930176,
+          "mean_correct_margin": -0.05035756155848503
+        },
+        "control_mean": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6111111557111144,
+          "mean_correct_margin": -0.07429121907625813
+        },
+        "percentiles": {
+          "accuracy": 0.5,
+          "mean_reciprocal_rank": 0.5,
+          "mean_correct_margin": 0.6212121212121212
+        }
+      },
+      "value": {
+        "real": {
+          "accuracy": 0.3333333432674408,
+          "mean_reciprocal_rank": 0.6666666865348816,
+          "mean_correct_margin": -0.001632611034438014
+        },
+        "control_mean": {
+          "accuracy": 0.3020833423361182,
+          "mean_reciprocal_rank": 0.5989583795890212,
+          "mean_correct_margin": -0.20476888764824253
+        },
+        "percentiles": {
+          "accuracy": 0.5454545454545454,
+          "mean_reciprocal_rank": 0.8939393939393939,
+          "mean_correct_margin": 0.8636363636363636
+        },
+        "margin_improvement_vs_control_mean": 0.2031362766138045
+      }
+    }
+  ],
+  "reading": "Gate 3 remains negative for absolute retrieval: real receiver-space top-1 accuracy is 1/3 at every magnitude and all real margins remain below zero. However the frozen value-head receiver reshapes the real history direction much more favorably than matched controls: correct-margin percentile is 0.8636 at magnitudes 1, 2, and 4, and MRR percentile stays about 0.88-0.91. Association-space enrichment is weaker and declines with magnitude. This is preliminary evidence that learned receiver geometry selectively preserves trajectory identity relative to matched directions, not evidence that retrieval succeeds.",
+  "boundary": "Preliminary n=3 smoke test. The bank contains adjacent settling states from the same deterministic position. The test does not establish episodic recall, learned attention, biological memory, or consciousness."
+}
